@@ -41,6 +41,10 @@ public class PayOrderInfo implements Serializable {
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
+    private String subjectName;
+
+    private String amount;
+
     /**
      * 订单内容
      */
@@ -69,7 +73,7 @@ public class PayOrderInfo implements Serializable {
     /**
      * 内部交易号
      */
-    private Long inTransactionNo;
+    private String inTransactionNo;
 
 
 }

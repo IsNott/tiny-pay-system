@@ -5,7 +5,7 @@ package org.nott.enums;
  * @date 2024-5-7
  */
 
-public enum TypeEnum {
+public enum OrderTypeEnum {
 
     PAY(1,"pay order"),
     REFUND(2,"refund order");
@@ -14,7 +14,7 @@ public enum TypeEnum {
 
     private String desc;
 
-    TypeEnum(Integer type, String desc) {
+    OrderTypeEnum(Integer type, String desc) {
         this.type = type;
         this.desc = desc;
     }

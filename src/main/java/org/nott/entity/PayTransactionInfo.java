@@ -30,6 +30,11 @@ public class PayTransactionInfo implements Serializable {
     private Long id;
 
     /**
+     * 内部订单id
+     */
+    private Long inOrderId;
+
+    /**
      * 外部回调信息
      */
     private String outNotifyMsg;
@@ -47,7 +52,7 @@ public class PayTransactionInfo implements Serializable {
     /**
      * 内部交易号
      */
-    private Long transactionNo;
+    private String transactionNo;
 
     /**
      * 交易状态 订单状态 0-init 1-paying 2-pay success 3-failed 4-refund

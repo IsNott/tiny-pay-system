@@ -10,7 +10,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/tiny_pay?allowMultiQueries=true&useSSL=false&useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true
     username: root
-    password: 123456
+    password: pass
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -23,3 +23,18 @@ logging:
   config: classpath:logback.xml
   level:
     org.nott.mapper: debug
+
+alipay:
+  appId:
+  privateKey:
+  publicKey:
+  signType: RSA2
+  notifyUrl:
+
+weixinpay:
+  mchId:
+  appId:
+  apiV3Key:
+  notifyUrl:
+  privateKeyPath:
+  merchantSerialNumber:
