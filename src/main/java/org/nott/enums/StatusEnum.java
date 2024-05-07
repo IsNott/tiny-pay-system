@@ -1,6 +1,7 @@
 package org.nott.enums;
 
 /**
+ * 订单状态枚举
  * @author Nott
  * @date 2024-5-7
  */
