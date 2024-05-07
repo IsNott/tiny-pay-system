@@ -1,5 +1,6 @@
 package org.nott.mapper;
 
+import org.apache.ibatis.annotations.Mapper;
 import org.nott.entity.PayOrderInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.nott.entity.PayOrderInfo;

@@ -4,7 +4,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@MapperScan("mapper")
+@MapperScan("org.nott.mapper")
 @SpringBootApplication(scanBasePackages = "org.nott")
 public class Application {
     public static void main(String[] args) {
