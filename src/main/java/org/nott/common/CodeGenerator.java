@@ -15,9 +15,6 @@ import java.util.List;
 import java.util.Scanner;
 
 
-
-
-// mybatis-plus
 public class CodeGenerator {
 
     public static String scanner(String tip) {

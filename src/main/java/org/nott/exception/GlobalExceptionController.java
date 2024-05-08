@@ -1,5 +1,6 @@
 package org.nott.exception;
 
+import org.apache.commons.lang3.StringUtils;
 import org.nott.common.R;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ public class GlobalExceptionController {
     @ExceptionHandler(value = PayException.class)
     public R<?> payExceptionHandler(PayException e){
         log.error("Catch payException {}", e.getMessage(), e);
-        return R.failure("Something wrong at pay process,please retry later.");
+        return R.failure(StringUtils.isNotEmpty(e.getMessage()) ? e.getMessage() : "Something wrong at pay process,please retry later.");
     }
 
     @ExceptionHandler(value = RuntimeException.class)

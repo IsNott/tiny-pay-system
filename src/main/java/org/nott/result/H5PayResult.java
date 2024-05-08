@@ -1,4 +1,4 @@
-package org.nott.result.h5;
+package org.nott.result;
 
 import lombok.Data;
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.nott.mapper.CommonMapper">
+    
+    <update id="UpdateRowByCAS" parameterType="java.util.Map">
+        update ${table} set
+        <foreach item="entry" index="key" collection="setKeyPairs" separator=",">
+            ${key} = #{setKeyPairs.${key}}
+        </foreach>
+        where
+        <foreach item="entry" index="key" collection="valKeyPairs" separator=",">
+            ${key} = #{valKeyPairs.${key}}
+        </foreach>
+    </update>
+
+</mapper>

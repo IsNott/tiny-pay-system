@@ -41,9 +41,20 @@ public class PayOrderInfo implements Serializable {
     @TableField(fill = FieldFill.INSERT)
     private Date createTime;
 
+    /**
+     * 商品名称
+     */
     private String subjectName;
 
+    /**
+     * 金额，元为单位
+     */
     private String amount;
+
+    /**
+     * 退款订单号
+     */
+    private Long refundOrderNo;
 
     /**
      * 订单内容

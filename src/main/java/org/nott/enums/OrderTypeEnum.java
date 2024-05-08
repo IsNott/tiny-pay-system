@@ -11,16 +11,16 @@ public enum OrderTypeEnum {
     PAY(1,"pay order"),
     REFUND(2,"refund order");
 
-    private Integer type;
+    private Integer code;
 
     private String desc;
 
     OrderTypeEnum(Integer type, String desc) {
-        this.type = type;
+        this.code = type;
         this.desc = desc;
     }
 
-    public Integer getType() {
-        return type;
+    public Integer getCode() {
+        return code;
     }
 }
