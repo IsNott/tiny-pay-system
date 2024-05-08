@@ -16,10 +16,9 @@ import org.nott.entity.PayPaymentType;
 import org.nott.entity.PayTransactionInfo;
 import org.nott.enums.StatusEnum;
 import org.nott.exception.PayException;
-import org.nott.mapper.PayTransactionInfoMapper;
 import org.nott.result.RefundResult;
 import org.nott.result.alipay.AlipayH5Result;
-import org.nott.result.H5PayResult;
+import org.nott.result.PayResult;
 import org.nott.service.H5PayService;
 import org.nott.service.impl.OrderService;
 import org.nott.service.impl.PaymentService;
@@ -54,7 +53,7 @@ public class AlipayService implements H5PayService {
     private OrderService orderService;
 
     @Override
-    public H5PayResult doH5Pay(PayOrderInfo payOrderInfo) {
+    public PayResult doH5Pay(PayOrderInfo payOrderInfo) {
         Long orderNo = payOrderInfo.getOrderNo();
         PayTransactionInfo payTransactionInfo = null;
 

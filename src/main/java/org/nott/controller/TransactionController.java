@@ -10,7 +10,7 @@ import org.nott.entity.PayPaymentType;
 import org.nott.enums.OrderTypeEnum;
 import org.nott.enums.StatusEnum;
 import org.nott.payment.alipay.AlipayService;
-import org.nott.result.H5PayResult;
+import org.nott.result.PayResult;
 import org.nott.service.impl.OrderService;
 import org.nott.service.impl.PaymentService;
 import org.nott.vo.PayOrderInfoVo;
@@ -47,7 +47,7 @@ public class TransactionController {
         // TODO ..转换具体支付实现
 
         PayOrderInfo orderInfo = orderService.getByOrderNo(payDTO.getOrderNo(), OrderTypeEnum.PAY.getCode(), StatusEnum.INIT.getCode());
-        H5PayResult h5PayResult = alipayService.doH5Pay(orderInfo);
+        PayResult h5PayResult = alipayService.doH5Pay(orderInfo);
 
         return R.okData(h5PayResult);
     }
