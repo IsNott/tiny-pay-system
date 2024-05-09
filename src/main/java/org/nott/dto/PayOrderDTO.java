@@ -1,18 +1,16 @@
 package org.nott.dto;
 
-import lombok.Data;
-import lombok.Setter;
+import lombok.Getter;
 
 /**
  * @author Nott
  * @date 2024-5-7
  */
-@Data
+@Getter
 public class PayOrderDTO {
 
-    private String subjectName;
+    private String paymentCode;
 
-    private String amount;
+    private String orderNo;
 
-    private String extra;
 }

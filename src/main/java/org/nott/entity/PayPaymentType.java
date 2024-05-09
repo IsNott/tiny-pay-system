@@ -35,9 +35,19 @@ public class PayPaymentType implements Serializable {
     private String paymentCode;
 
     /**
+     * 支付类型
+     */
+    private String paymentType;
+
+    /**
      * 第三方支付地址
      */
     private String paymentUrl;
+
+    /**
+     * 预留
+     */
+    private String extra;
 
 
 }

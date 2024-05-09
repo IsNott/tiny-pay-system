@@ -8,6 +8,7 @@ import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.response.AlipayTradeWapPayResponse;
 import jakarta.annotation.Resource;
 import org.nott.annotations.Payment;
+import org.nott.annotations.PaymentType;
 import org.nott.common.ThreadPoolContext;
 import org.nott.config.AlipayConfig;
 import org.nott.dto.RefundOrderDTO;
@@ -33,7 +34,7 @@ import java.util.Map;
  * @date 2024-5-7
  */
 
-@Payment("aliH5")
+@Payment(code = "alipay")
 @Service
 public class AlipayService implements H5PayService {
 
@@ -52,6 +53,7 @@ public class AlipayService implements H5PayService {
     @Resource
     private OrderService orderService;
 
+    @PaymentType("h5")
     @Override
     public PayResult doH5Pay(PayOrderInfo payOrderInfo) {
         Long orderNo = payOrderInfo.getOrderNo();

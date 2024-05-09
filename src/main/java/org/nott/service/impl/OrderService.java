@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
-import org.nott.dto.PayOrderDTO;
+import org.nott.dto.CreateOrderDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayTransactionInfo;
 import org.nott.enums.StatusEnum;
@@ -39,11 +39,11 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
     @Resource
     private PayTransactionInfoMapper payTransactionInfoMapper;
 
-    public PayOrderInfoVo initializeOrder(PayOrderDTO payOrderDTO) {
-        String orderParam = JSON.toJSONString(payOrderDTO);
+    public PayOrderInfoVo initializeOrder(CreateOrderDTO createOrderDTO) {
+        String orderParam = JSON.toJSONString(createOrderDTO);
 
         PayOrderInfo payOrderInfo = new PayOrderInfo();
-        BeanUtils.copyProperties(payOrderDTO, payOrderInfo);
+        BeanUtils.copyProperties(createOrderDTO, payOrderInfo);
         payOrderInfo.setOrderNo(IdWorker.getId());
         payOrderInfo.setOrderType(OrderTypeEnum.PAY.getCode());
         payOrderInfo.setPayStatus(StatusEnum.INIT.getCode());

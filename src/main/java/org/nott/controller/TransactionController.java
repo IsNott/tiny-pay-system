@@ -2,8 +2,8 @@ package org.nott.controller;
 
 import jakarta.annotation.Resource;
 import org.nott.common.R;
-import org.nott.dto.PayDTO;
 import org.nott.dto.PayOrderDTO;
+import org.nott.dto.CreateOrderDTO;
 import org.nott.dto.RefundOrderDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayPaymentType;
@@ -36,17 +36,19 @@ public class TransactionController {
 
 
     @RequestMapping(path = "createPay", method = RequestMethod.POST)
-    public R<?> createPayOrder(@RequestBody PayOrderDTO payOrderDTO) {
-        PayOrderInfoVo orderInfoVo = orderService.initializeOrder(payOrderDTO);
+    public R<?> createPayOrder(@RequestBody CreateOrderDTO createOrderDTO) {
+        PayOrderInfoVo orderInfoVo = orderService.initializeOrder(createOrderDTO);
         return R.okData(orderInfoVo);
     }
 
     @RequestMapping(path = "gateway", method = RequestMethod.POST)
-    public R<?> gateway(@RequestBody PayDTO payDTO) {
-        List<PayPaymentType> payments = paymentService.findPaymentByCode(payDTO.getPaymentCode());
-        // TODO ..转换具体支付实现
+    public R<?> gateway(@RequestBody PayOrderDTO payOrderDTO) {
+        List<PayPaymentType> payments = paymentService.findPaymentByCode(payOrderDTO.getPaymentCode());
 
-        PayOrderInfo orderInfo = orderService.getByOrderNo(payDTO.getOrderNo(), OrderTypeEnum.PAY.getCode(), StatusEnum.INIT.getCode());
+        PayPaymentType payPaymentType = payments.get(0);
+        // TODO ..转换具体支付实现 paymentName + type注解定位
+        PayOrderInfo orderInfo = orderService.getByOrderNo(payOrderDTO.getOrderNo(), OrderTypeEnum.PAY.getCode(), StatusEnum.INIT.getCode());
+
         PayResult h5PayResult = alipayService.doH5Pay(orderInfo);
 
         return R.okData(h5PayResult);

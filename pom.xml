@@ -20,6 +20,7 @@
         <mysql-cj.version>8.0.31</mysql-cj.version>
         <ali-pay.version>4.39.60.ALL</ali-pay.version>
         <log4j.version>2.20.0</log4j.version>
+        <aspectj.version>1.9.21</aspectj.version>
     </properties>
 
     <parent>
@@ -41,6 +42,12 @@
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-spring-boot3-starter</artifactId>
             <version>${mybatis-plus.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
         </dependency>
 
         <dependency>
