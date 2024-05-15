@@ -22,7 +22,7 @@
 目前仅支持支付宝H5订单创建/支付，业务通知、退款还在开发中
 
 1.创建订单，使用http进行接口调用，获取到orderNo后调用gateway网关接口
-```http request
+```
 path:/transaction/createPay
 body:{
     "subjectName":"cs", # 商品名称
@@ -38,7 +38,7 @@ response:{
 }
 ```
 2.创建订单后，调用交易网关接口
-```http request
+```
 path:/transaction/gateway
 body:{
     "orderNo": "1240240502364700672", # 订单号
