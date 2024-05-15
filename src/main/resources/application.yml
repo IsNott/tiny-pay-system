@@ -38,3 +38,7 @@ weixinpay:
   notifyUrl:
   privateKeyPath:
   merchantSerialNumber:
+
+payment:
+  package:
+    name: org.nott.payment

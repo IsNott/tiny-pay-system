@@ -5,7 +5,7 @@
 ## 依赖
 
 | name           |version|
-|----------------|--|
+|----------------|---|
 | Java           |17|
 | springboot-web |3.2.1|
 | mysql          |8+|
@@ -17,6 +17,44 @@
 | pay_order_info       | 内部订单记录 |
 | pay_payment_type     | 定义的支付方式|
 | pay_transaction_info | 外部交易记录|
+
+## 使用
+目前仅支持支付宝H5订单创建/支付，业务通知、退款还在开发中
+
+1.创建订单，使用http进行接口调用，获取到orderNo后调用gateway网关接口
+```http request
+path:/transaction/createPay
+body:{
+    "subjectName":"cs", # 商品名称
+    "amount":"0.01" # 金额，以CNY元为单位，方便前端展示
+    }
+# 返回内容以code=200为成功
+response:{
+    "code": 200,
+    "msg": "success",
+    "obj": {
+        "orderNo": "1240240502364700672"
+    }
+}
+```
+2.创建订单后，调用交易网关接口
+```http request
+path:/transaction/gateway
+body:{
+    "orderNo": "1240240502364700672", # 订单号
+    "paymentCode":"alipay", # 支付方式代码 支付宝-alipay
+    "paymentType":"h5" # 支付业务方式
+}
+# 返回内容以code=200为成功
+response:{
+    "code": 200,
+    "msg": "success",
+    "obj": {
+        "orderNo": "1240240502364700672",
+        "pageData": "<form name=\"punchout_form\" method=\"post\" action=\"https://openapi-sandbox.dl.alipaydev.com/gateway.do?charset=UTF-8&method=alipay.trade.wap.pay&sign=MsOD46CPN8L7vkI%2BddldBHOC3Woulbgsrm7xhQhAIvIHHv%2F4zHXzMAfFgJIOd2xVaINhk9yY%2FF70QDd65AbU09uWpEFoAZhGNO%2BZVKz%2FkD03mblk1EhGtoeduV4MY9ugZZXT1YlETeOQ%2FGZc99lap5R0GgK%2Bgq4b88lICdDbof1YyYuN7wRYzcdMVQdVxRXotX05oHGUKsQwGJ8WzooSCKK%2B733SOQYRn47cTXYiQb3FYHAk7Qln7KyxJa%2B%2FKMl%2Bva9P3k39CEgVQCdwaKAsfMjZMg%3D%3D&version=1.0&app_id=9021000122696227&sign_type=RSA2&timestamp=2024-05-15+10%3A11%3A35&alipay_sdk=alipay-sdk-java-4.39.60.ALL&format=json\">\n<input type=\"hidden\" name=\"biz_content\" value=\"{&quot;out_trade_no&quot;:&quot;20240515100011240240504877088768&quot;,&quot;total_amount&quot;:&quot;0.01&quot;,&quot;subject&quot;:&quot;cs&quot;,&quot;product_code&quot;:&quot;QUICK_WAP_WAY&quot;}\">\n<input type=\"submit\" value=\"立即支付\" style=\"display:none\" >\n</form>\n<script>document.forms[0].submit();</script>"
+    }
+}
+```
 
 ## 目录结构
 
@@ -86,14 +124,14 @@
 ```
 
 
-
 ## 开发记录
 
-| doing                                            | todo                     | done                                               |
-| ------------------------------------------------ | ------------------------ | -------------------------------------------------- |
-| \                                                | \                        | 系统构建（基本交易接口定义、配置类、日志打印功能） |
-| \                                                | 支付宝H5支付通知处理逻辑 | 支付宝H5创建订单接口逻辑                           |
-| 交易入口根据标识注解分发到具体外部交易实现类逻辑 | \                        | \                                                  |
+| doing                    | todo                     | done                      |
+|--------------------------| ------------------------ |---------------------------|
+| \                        | \                        | 系统构建（基本交易接口定义、配置类、日志打印功能） |
+| \                        | 支付宝H5支付通知处理逻辑 | 支付宝H5创建订单接口逻辑             |
+| 交易入口根据标识注解分发到具体外部交易实现类逻辑 | \                        | \                         |
+| \                        | \                        | gateway接口分发请求到具体外部交易实现类   |
 
 ## 帮助
-如果您恰巧是熟悉支付系统的相关概念，有更好的项目实践，想要作为项目贡献者，请提供PR，谢谢。
+如果您恰巧熟悉支付系统，有更好的项目实践，想要作为项目贡献者，请提供PR，谢谢。

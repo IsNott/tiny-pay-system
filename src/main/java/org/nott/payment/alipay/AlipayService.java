@@ -20,6 +20,7 @@ import org.nott.exception.PayException;
 import org.nott.result.RefundResult;
 import org.nott.result.alipay.AlipayH5Result;
 import org.nott.result.PayResult;
+import org.nott.service.AbstractPaymentService;
 import org.nott.service.H5PayService;
 import org.nott.service.impl.OrderService;
 import org.nott.service.impl.PaymentService;
@@ -36,7 +37,7 @@ import java.util.Map;
 
 @Payment(code = "alipay")
 @Service
-public class AlipayService implements H5PayService {
+public class AlipayService extends AbstractPaymentService implements H5PayService {
 
     @Resource
     private TransactionService transactionService;

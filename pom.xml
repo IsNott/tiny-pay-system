@@ -21,6 +21,7 @@
         <ali-pay.version>4.39.60.ALL</ali-pay.version>
         <log4j.version>2.20.0</log4j.version>
         <aspectj.version>1.9.21</aspectj.version>
+        <guava.version>32.1.3-jre</guava.version>
     </properties>
 
     <parent>
@@ -98,6 +99,14 @@
             <artifactId>log4j-api</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
+        </dependency>
+
 
     </dependencies>
 

@@ -11,6 +11,8 @@ public class PayOrderDTO {
 
     private String paymentCode;
 
+    private String paymentType;
+
     private String orderNo;
 
 }

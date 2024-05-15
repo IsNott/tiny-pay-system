@@ -13,9 +13,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface PaymentType {
 
-    @AliasFor("type")
     String value() default "";
 
-    @AliasFor("value")
-    String type() default "";
 }

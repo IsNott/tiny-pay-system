@@ -8,7 +8,7 @@ import lombok.Data;
  * @date 2024-5-7
  */
 @Data
-public abstract class PayResult {
+public abstract class PayResult implements Result {
 
     private Long orderNo;
 
