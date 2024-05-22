@@ -11,7 +11,7 @@
  Target Server Version : 50735 (5.7.35)
  File Encoding         : 65001
 
- Date: 09/05/2024 14:17:30
+ Date: 22/05/2024 16:14:26
 */
 
 SET NAMES utf8mb4;
@@ -58,13 +58,14 @@ DROP TABLE IF EXISTS `pay_transaction_info`;
 CREATE TABLE `pay_transaction_info`  (
   `id` bigint(20) NOT NULL COMMENT 'id',
   `in_order_id` bigint(20) NULL DEFAULT NULL COMMENT '内部订单id',
-  `out_notify_msg` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '外部回调信息',
+  `out_notify_msg` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '外部回调信息',
   `out_transaction_no` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '外部交易号',
   `out_transaction_param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '外部交易参数',
   `payment_code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '结算支付能力代码',
   `transaction_no` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '内部交易号',
   `transaction_status` tinyint(4) NULL DEFAULT 0 COMMENT '交易状态 订单状态 0-init 1-paying 2-pay success 3-failed 4-refund',
   `transaction_type` tinyint(4) NOT NULL COMMENT '交易类型 1-支付 2-退款',
+  `notify_time` datetime NULL DEFAULT NULL COMMENT '通知时间',
   `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
   `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE
