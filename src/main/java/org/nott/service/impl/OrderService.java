@@ -72,19 +72,29 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
     public PayOrderInfo initializeRefundOrder(String orderNo) {
         PayOrderInfo payOrder = this.getByOrderNo(orderNo, OrderTypeEnum.PAY.getCode(), StatusEnum.PAY_SUCCESS.getCode());
         Long refundOrderNo = payOrder.getRefundOrderNo();
-        if (refundOrderNo != null) {
+        boolean alreadyHasRefund = payOrder.getRefundOrderNo() != null;
+        if (alreadyHasRefund) {
             PayOrderInfo refundOrder = this.getByOrderNo(orderNo, OrderTypeEnum.REFUND.getCode(), StatusEnum.INIT.getCode());
             if (refundOrder == null) {
                 throw new PayException(String.format("退款单：%s，已有退款中记录，请稍后重试", refundOrderNo));
             }
             return refundOrder;
         }
+        refundOrderNo = IdWorker.getId();
         PayOrderInfo refundOrder = new PayOrderInfo();
-        BeanUtils.copyProperties(payOrder, refundOrder, "id", "updateTime", "createTime", "orderType", "payStatus", "inTransactionNo");
+        BeanUtils.copyProperties(payOrder, refundOrder,
+                "id", "updateTime","orderParam", "createTime",
+                "orderType", "payStatus", "inTransactionNo");
         refundOrder.setOrderType(OrderTypeEnum.REFUND.getCode());
+        refundOrder.setOrderNo(refundOrderNo);
         refundOrder.setPayStatus(StatusEnum.INIT.getCode());
-        payOrderInfoMapper.insert(refundOrder);
+        payOrder.setRefundOrderNo(refundOrderNo);
 
+        LambdaUpdateWrapper<PayOrderInfo> updateWrapper = new LambdaUpdateWrapper<PayOrderInfo>().eq(PayOrderInfo::getId, payOrder.getId())
+                .eq(PayOrderInfo::getPayStatus, StatusEnum.PAY_SUCCESS.getCode())
+                .set(PayOrderInfo::getRefundOrderNo, refundOrderNo);
+        payOrderInfoMapper.update(updateWrapper);
+        payOrderInfoMapper.insert(refundOrder);
         transactionService.createTransactionByOrder(refundOrder);
 
         return refundOrder;

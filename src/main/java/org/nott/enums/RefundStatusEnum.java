@@ -20,4 +20,12 @@ public enum RefundStatusEnum {
         this.code = code;
         this.desc = desc;
     }
+
+    public Integer getCode() {
+        return code;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
 }

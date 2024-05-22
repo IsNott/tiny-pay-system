@@ -1,6 +1,7 @@
 package org.nott.payment.alipay;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -20,6 +21,7 @@ import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayPaymentType;
 import org.nott.entity.PayTransactionInfo;
 import org.nott.enums.OrderTypeEnum;
+import org.nott.enums.RefundStatusEnum;
 import org.nott.enums.StatusEnum;
 import org.nott.exception.PayException;
 import org.nott.result.RefundResult;
@@ -33,6 +35,7 @@ import org.nott.service.impl.PaymentService;
 import org.nott.service.impl.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -193,23 +196,30 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
             throw new PayException(String.format("订单：[%s],没有找到对应的交易记录，请检查", payOrderNo));
         }
         String inTransactionNo = payOrderInfo.getInTransactionNo();
+        // 找回退款订单记录
+        String refundOrderNo = refundOrderDTO.getRefundOrderNo();
+        PayOrderInfo refundOrder = orderService.getByOrderNo(refundOrderNo, OrderTypeEnum.REFUND.getCode(), StatusEnum.INIT.getCode());
+        // 原订单的支付方式
         PayPaymentType payPaymentType = paymentService.findPaymentByCode(payOrderInfo.getPaymentCode()).get(0);
         // 组装退款信息和执行请求
-        AlipayTradeFastpayRefundQueryResponse response = this.assemableRefundRequestAndExecute(inTransactionNo, payPaymentType);
-        // todo 更新退款信息
-
-
+        AlipayTradeFastpayRefundQueryResponse response = this.assemableRefundRequestAndExecute(inTransactionNo, payPaymentType,refundOrder);
+        // 更新退款记录
+        refundOrder.setPayStatus(RefundStatusEnum.REFUNDING.getCode());
         // 返回结果
         AlipayRefundResult result = new AlipayRefundResult();
         result.setRefundOrderNo(payOrderInfo.getRefundOrderNo());
         result.setOrgOrderNo(payOrderInfo.getOrderNo());
         result.setRequestSuccess(true);
-        //todo 是否同步执行退款成功，都走异步处理结果接口
 
+        // 是否同步执行退款成功，都走异步处理结果接口
+        threadPoolTaskExecutor.execute(()->{
+            JSONObject respJsonObj = JSONObject.parseObject(JSON.toJSONString(response));
+            this.handleNotifyMsg(respJsonObj.toJavaObject(Map.class));
+        });
         return result;
     }
 
-    private AlipayTradeFastpayRefundQueryResponse assemableRefundRequestAndExecute(String inTransactionNo, PayPaymentType payPaymentType) {
+    private AlipayTradeFastpayRefundQueryResponse assemableRefundRequestAndExecute(String inTransactionNo, PayPaymentType payPaymentType,PayOrderInfo refundOrderInfo) {
         // 构建退款请求
         AlipayClient alipayClient = getAlipayClient(payPaymentType.getPaymentUrl());
         AlipayTradeFastpayRefundQueryRequest request = new AlipayTradeFastpayRefundQueryRequest();
@@ -232,6 +242,8 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         if(!response.isSuccess()){
             throw new PayException("Execute alipay refund request failed.");
         }
+
+        refundOrderInfo.setOrderParam(JSON.toJSONString(request));
         return response;
     }
 }
