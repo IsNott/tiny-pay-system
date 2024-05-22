@@ -37,12 +37,14 @@ public class LogAspect {
         String methodName = pjd.getSignature().getName();
 
         Object[] args = pjd.getArgs();
-        try {
-            String params = JSON.toJSONString(args[0]);
-            log.info("{}.{}()[Method Param]：{}", className, methodName, params);
-        } catch (Exception e) {
-            log.info("{}.{}()[Method Param Print Error]：{}", className, methodName, e);
-        }
+       if(args.length > 0){
+           try {
+               String params = JSON.toJSONString(args[0]);
+               log.info("{}.{}()[Method Param]：{}", className, methodName, params);
+           } catch (Exception e) {
+               log.info("{}.{}()[Method Param Print Error]：{}", className, methodName, e);
+           }
+       }
         Object result = pjd.proceed();
         try {
             String s = JSON.toJSONString(result);

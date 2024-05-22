@@ -57,7 +57,7 @@ public class PayServiceContext {
         Object service = instanceService(code);
         Result result = null;
         try {
-            result = (Result)serviceMethod.invoke(service, args);
+            result = (Result) serviceMethod.invoke(service, args);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -1,5 +1,6 @@
 package org.nott.payment.alipay;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -12,6 +13,7 @@ import org.nott.annotations.PaymentType;
 import org.nott.common.ThreadPoolContext;
 import org.nott.config.AlipayConfig;
 import org.nott.dto.RefundOrderDTO;
+import org.nott.dto.TradeNotifyDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayPaymentType;
 import org.nott.entity.PayTransactionInfo;
@@ -25,6 +27,7 @@ import org.nott.service.H5PayService;
 import org.nott.service.impl.OrderService;
 import org.nott.service.impl.PaymentService;
 import org.nott.service.impl.TransactionService;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -53,6 +56,9 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
 
     @Resource
     private OrderService orderService;
+
+    @Resource
+    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     @PaymentType("h5")
     @Override
@@ -87,15 +93,16 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
             response = createAlipayTradeWapPay(payPaymentType, payOrderInfo, payTransactionInfo);
             pageRedirectionData = response.getBody();
         } catch (AlipayApiException e) {
-            orderService.updatePayStatus(payOrderInfo, payTransactionInfo, StatusEnum.INIT.getCode(), StatusEnum.PAY_FAIL.getCode());
+            orderService.updatePayStatusAndOutTradeInfo(payOrderInfo, payTransactionInfo, StatusEnum.INIT.getCode(), StatusEnum.PAY_FAIL.getCode());
             throw new PayException(e.getMessage());
         }
+        payOrderInfo.setPaymentCode(payPaymentType.getPaymentCode());
 
         AlipayH5Result result = new AlipayH5Result();
         result.setPageData(pageRedirectionData);
         result.setOrderNo(orderNo);
 
-        orderService.updatePayStatus(payOrderInfo, payTransactionInfo, StatusEnum.INIT.getCode(), StatusEnum.PAY_SUCCESS.getCode());
+        orderService.updatePayStatusAndOutTradeInfo(payOrderInfo, payTransactionInfo, StatusEnum.INIT.getCode(), StatusEnum.PAY_SUCCESS.getCode());
         return result;
 
     }
@@ -129,17 +136,32 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         bizContent.put("product_code", "QUICK_WAP_WAY");
 
         request.setBizContent(bizContent.toString());
-        response = alipayClient.pageExecute(request, "POST");
+        response = alipayClient.pageExecute(request, "GET");
 
         if (!response.isSuccess()) {
-            throw new PayException("Alipay H5 not success, " + response.toString());
+            throw new PayException("Alipay H5 pay request executed failed, " + response.toString());
         }
+
+        payTransactionInfo.setOutTransactionParam(JSON.toJSONString(request));
         return response;
     }
 
     public void handleNotifyMsg(Map<String, String> notifyParam) {
-        //TODO 回调处理
+        // 回调处理
+        TradeNotifyDTO tradeNotifyDTO = JSON.parseObject(JSON.toJSONString(notifyParam), TradeNotifyDTO.class);
+        boolean isTradeSuccess = "TRADE_SUCCESS".equals(tradeNotifyDTO.getTrade_status());
+        if (!isTradeSuccess) {
+            return;
+        }
+        PayTransactionInfo payTransactionInfo = transactionService.checkIfExist(tradeNotifyDTO.getOut_trade_no());
+        final Long payTransactionInfoId = payTransactionInfo.getId();
 
+        transactionService.updateTradeStateByACS(payTransactionInfoId, tradeNotifyDTO);
+        // 异步处理业务逻辑
+        threadPoolTaskExecutor.execute(()->{
+            // 更新信息
+            transactionService.updateTradeBusinessInfo(payTransactionInfoId, tradeNotifyDTO);
+        });
     }
 
     @Override

@@ -9,5 +9,4 @@ import org.nott.result.RefundResult;
 public interface TransactionService {
 
     RefundResult doRefund(RefundOrderDTO refundOrderDTO);
-
 }
