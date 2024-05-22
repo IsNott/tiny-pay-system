@@ -12,8 +12,9 @@ public enum StatusEnum {
     PAYING(1,"支付中"),
     PAY_SUCCESS(2,"支付成功"),
     PAY_FAIL(3,"支付失败"),
-    REFUND(4,"交易退款"),
-    PAY_CLOSED(5,"订单关闭"),
+    REFUNDING(4,"交易退款中"),
+    REFUND(5,"交易退款"),
+    PAY_CLOSED(6,"订单关闭"),
     ;
 
     private Integer code;

@@ -68,7 +68,7 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         return payOrderInfos.get(0);
     }
 
-    //TODO 生成退款单
+    // 生成内部退款单
     public PayOrderInfo initializeRefundOrder(String orderNo) {
         PayOrderInfo payOrder = this.getByOrderNo(orderNo, OrderTypeEnum.PAY.getCode(), StatusEnum.PAY_SUCCESS.getCode());
         Long refundOrderNo = payOrder.getRefundOrderNo();
@@ -108,4 +108,13 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         payTransactionInfoMapper.update(updateWrapper);
     }
 
+    public PayOrderInfo findPayOrderByRefundOrderNo(Long refundOrderNo) {
+        LambdaQueryWrapper<PayOrderInfo> queryWrapper = new LambdaQueryWrapper<PayOrderInfo>().eq(PayOrderInfo::getRefundOrderNo, refundOrderNo)
+                .eq(PayOrderInfo::getPayStatus, StatusEnum.PAY_SUCCESS);
+        PayOrderInfo orgPayOrder = payOrderInfoMapper.selectOne(queryWrapper);
+        if(orgPayOrder == null){
+            throw new PayException(String.format("退款订单号：%s，没有可退款的原始支付记录", refundOrderNo));
+        }
+        return orgPayOrder;
+    }
 }

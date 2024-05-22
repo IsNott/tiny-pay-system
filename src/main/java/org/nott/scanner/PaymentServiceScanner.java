@@ -5,6 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.nott.annotations.Payment;
 import org.nott.annotations.PaymentType;
+import org.nott.annotations.Refund;
 import org.nott.exception.PayException;
 import org.nott.service.AbstractPaymentService;
 import org.nott.support.PayServiceContext;
@@ -15,6 +16,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -46,6 +48,10 @@ public class PaymentServiceScanner {
                 String paymentValue = annotation.value();
                 String paymentCode = annotation.code();
                 PayServiceContext.PAYMENT_SERVICE.put(StringUtils.isNotEmpty(paymentValue) ? paymentValue : paymentCode, clazz);
+                Method refundMethod = Arrays.stream(clazz.getMethods()).filter(r -> r.isAnnotationPresent(Refund.class)).findAny().orElse(null);
+                if (refundMethod != null) {
+                    PayServiceContext.REFUND_SERVICE.put(StringUtils.isNotEmpty(paymentValue) ? paymentValue : paymentCode, refundMethod);
+                }
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException("Payment Service Put In Context Throw Exception:{}", e.getException());
             }

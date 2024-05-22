@@ -71,6 +71,11 @@ public class PayTransactionInfo implements Serializable {
     private Date createTime;
 
     /**
+     * 通知时间
+     */
+    private Date notifyTime;
+
+    /**
      * 更新时间
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)

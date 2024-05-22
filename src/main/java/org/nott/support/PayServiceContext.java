@@ -5,6 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import org.nott.annotations.PaymentType;
 import org.nott.common.SpringContextUtils;
+import org.nott.exception.PayException;
 import org.nott.result.Result;
 
 import java.lang.reflect.Method;
@@ -20,6 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PayServiceContext {
 
     public static final ConcurrentHashMap<String,Class<?>> PAYMENT_SERVICE = new ConcurrentHashMap<>();
+
+    public static final ConcurrentHashMap<String,Method> REFUND_SERVICE = new ConcurrentHashMap<>();
+
 
     public static Object instanceService(String code){
         Class<?> serviceClass = PAYMENT_SERVICE.get(code);
@@ -54,6 +58,21 @@ public class PayServiceContext {
 
     public static Result invokePaymentTypeMethod(String code, String type, Object... args) {
         Method serviceMethod = findServiceMethod(code, type);
+        Object service = instanceService(code);
+        Result result = null;
+        try {
+            result = (Result) serviceMethod.invoke(service, args);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    public static Result invokeRefundMethod(String code,Object... args) {
+        Method serviceMethod = REFUND_SERVICE.get(code);
+        if(serviceMethod == null){
+            throw new PayException(String.format("Payment Code [%s] can not found any refund method.", code));
+        }
         Object service = instanceService(code);
         Result result = null;
         try {

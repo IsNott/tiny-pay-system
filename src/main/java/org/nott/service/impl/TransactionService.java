@@ -14,6 +14,7 @@ import org.nott.mapper.PayOrderInfoMapper;
 import org.nott.mapper.PayTransactionInfoMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,21 +40,22 @@ public class TransactionService {
     }
 
     public PayTransactionInfo createTransactionByOrder(PayOrderInfo payOrderInfo) {
-        PayTransactionInfo po = new PayTransactionInfo();
-        po.setInOrderId(payOrderInfo.getId());
-        po.setTransactionType(payOrderInfo.getOrderType());
-        po.setTransactionNo(TransactionNoFactory.next());
-        po.setTransactionStatus(StatusEnum.INIT.getCode());
+        PayTransactionInfo payTransactionInfo = new PayTransactionInfo();
+        payTransactionInfo.setInOrderId(payOrderInfo.getId());
+        payTransactionInfo.setTransactionType(payOrderInfo.getOrderType());
+        payTransactionInfo.setTransactionNo(TransactionNoFactory.next());
+        payTransactionInfo.setTransactionStatus(StatusEnum.INIT.getCode());
 
-        payTransactionInfoMapper.insert(po);
+        payTransactionInfoMapper.insert(payTransactionInfo);
 
-        payOrderInfo.setInTransactionNo(po.getTransactionNo());
+        payOrderInfo.setInTransactionNo(payTransactionInfo.getTransactionNo());
         payOrderInfoMapper.updateById(payOrderInfo);
-        return po;
+        return payTransactionInfo;
     }
 
     public int updateTradeStateByACS(Long id, TradeNotifyDTO tradeNotifyDTO) {
         LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.set(PayTransactionInfo::getNotifyTime,new Date());
         wrapper.set(PayTransactionInfo::getOutTransactionNo,tradeNotifyDTO.getTrade_no());
         wrapper.eq(PayTransactionInfo::getId,id);
         wrapper.isNull(PayTransactionInfo::getOutTransactionNo);

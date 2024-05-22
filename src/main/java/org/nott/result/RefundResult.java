@@ -7,9 +7,11 @@ import lombok.Data;
  * @date 2024-5-8
  */
 @Data
-public class RefundResult {
+public abstract class RefundResult implements Result {
 
     private boolean requestSuccess;
 
-    private Integer orderStatus;
+    private Long orgOrderNo;
+
+    private Long refundOrderNo;
 }

@@ -56,10 +56,11 @@ public class TransactionController {
     @RequestMapping(path = "refund", method = RequestMethod.POST)
     public R<?> refund(@RequestBody RefundOrderDTO refundOrderDTO) {
         PayOrderInfo refundOrder = orderService.initializeRefundOrder(refundOrderDTO.getPayOrderNo());
+        PayOrderInfo orgPayOrder = orderService.findPayOrderByRefundOrderNo(refundOrder.getOrderNo());
         refundOrderDTO.setRefundOrderNo(String.valueOf(refundOrder.getOrderNo()));
-        // TODO ..转换具体退款实现
-        alipayService.doRefund(refundOrderDTO);
-        return R.okData(null);
+        // 转换具体退款实现
+        Result result = PayServiceContext.invokeRefundMethod(orgPayOrder.getPaymentCode(), refundOrderDTO);
+        return R.okData(result);
     }
 
 }
