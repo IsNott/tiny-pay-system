@@ -128,7 +128,7 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         result.setPageData(pageRedirectionData);
         result.setOrderNo(orderNo);
 
-        orderService.updatePayStatusAndOutTradeInfo(payOrderInfo, payTransactionInfo, StatusEnum.INIT.getCode(), StatusEnum.PAY_SUCCESS.getCode());
+        orderService.updatePayStatusAndOutTradeInfo(payOrderInfo, payTransactionInfo, StatusEnum.INIT.getCode(), StatusEnum.PAYING.getCode());
         return result;
 
     }

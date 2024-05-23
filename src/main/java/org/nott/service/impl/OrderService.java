@@ -10,11 +10,13 @@ import jakarta.annotation.Resource;
 import org.nott.dto.CreateOrderDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayTransactionInfo;
+import org.nott.enums.RefundStatusEnum;
 import org.nott.enums.StatusEnum;
 import org.nott.enums.OrderTypeEnum;
 import org.nott.exception.PayException;
 import org.nott.mapper.PayOrderInfoMapper;
 import org.nott.mapper.PayTransactionInfoMapper;
+import org.nott.vo.OrderQueryVo;
 import org.nott.vo.PayOrderInfoVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -126,5 +128,23 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
             throw new PayException(String.format("退款订单号：%s，没有可退款的原始支付记录", refundOrderNo));
         }
         return orgPayOrder;
+    }
+
+    public OrderQueryVo queryOrderStatus(String orderNo) {
+        LambdaQueryWrapper<PayOrderInfo> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(PayOrderInfo::getOrderNo,orderNo);
+        PayOrderInfo orderInfo = payOrderInfoMapper.selectOne(wrapper);
+        OrderQueryVo vo = new OrderQueryVo();
+        BeanUtils.copyProperties(orderInfo,vo);
+        //TODO 处于pending的状态需要查询一下外部交易系统
+        if(StatusEnum.PAYING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.PAY.getCode().equals(orderInfo.getOrderType())){
+
+        }
+        if((StatusEnum.REFUNDING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.PAY.getCode().equals(orderInfo.getOrderType())) ||
+                (RefundStatusEnum.REFUNDING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.REFUND.getCode().equals(orderInfo.getOrderType()))){
+
+        }
+
+        return vo;
     }
 }

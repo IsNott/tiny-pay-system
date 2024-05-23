@@ -14,12 +14,10 @@ import org.nott.result.Result;
 import org.nott.service.impl.OrderService;
 import org.nott.service.impl.PaymentService;
 import org.nott.support.PayServiceContext;
+import org.nott.vo.OrderQueryVo;
 import org.nott.vo.PayOrderInfoVo;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("transaction")
@@ -31,8 +29,6 @@ public class TransactionController {
     @Resource
     private PaymentService paymentService;
 
-    @Resource
-    private AlipayService alipayService;
 
     @Value("payment.package.name")
     private String paymentPackage;
@@ -51,6 +47,12 @@ public class TransactionController {
         PayOrderInfo orderInfo = orderService.getByOrderNo(payOrderDTO.getOrderNo(), OrderTypeEnum.PAY.getCode(), StatusEnum.INIT.getCode());
         Result result = PayServiceContext.invokePaymentTypeMethod(paymentType.getPaymentCode(), paymentType.getPaymentType(), orderInfo);
         return R.okData(result);
+    }
+
+    @RequestMapping(path = "query/{orderNo}", method = RequestMethod.GET)
+    public R<?> query(@PathVariable String orderNo){
+        OrderQueryVo vo = orderService.queryOrderStatus(orderNo);
+        return R.okData(vo);
     }
 
     @RequestMapping(path = "refund", method = RequestMethod.POST)
