@@ -15,13 +15,4 @@ public class PayOrderInfoVo {
      */
     private Long orderNo;
 
-//    /**
-//     * 订单类型 1-支付 2-退款
-//     */
-//    private Integer orderType;
-//
-//    /**
-//     * 订单状态 0-init 1-paying 2-pay success 3-failed 4-refund
-//     */
-//    private Integer payStatus;
 }

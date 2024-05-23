@@ -19,42 +19,36 @@
 | pay_transaction_info | 外部交易记录|
 
 ## 使用
-目前仅支持支付宝H5订单创建/支付，支付业务通知、退款接口。退款业务通知处理还在开发中
+目前仅支持支付宝H5订单创建/支付，支付业务通知、退款接口。
 
-1.创建订单，使用http进行接口调用，获取到orderNo后调用gateway网关接口
-```
-path:/transaction/createPay
-body:{
-    "subjectName":"cs", # 商品名称
-    "amount":"0.01" # 金额，以CNY元为单位，方便前端展示
-    }
-# 返回内容以code=200为成功
-response:{
-    "code": 200,
-    "msg": "success",
-    "obj": {
-        "orderNo": "1240240502364700672"
-    }
-}
-```
-2.创建订单后，调用交易网关接口
+退款业务通知处理还在开发中
+
+- 交易
+
+以支付宝H5为例，支付时调用交易网关接口
 ```
 path:/transaction/gateway
 body:{
-    "orderNo": "1240240502364700672", # 订单号
-    "paymentCode":"alipay", # 支付方式代码 支付宝-alipay
-    "paymentType":"h5" # 支付业务方式
+    "paymentCode":"alipay",
+    "paymentType":"h5",
+    "subjectName":"cs",
+    "amount":"0.01"
 }
 # 返回内容以code=200为成功
-response:{
+{
     "code": 200,
     "msg": "success",
     "obj": {
-        "orderNo": "1240240502364700672",
-        "pageData": "<form name=\"punchout_form\" method=\"post\" action=\"https://openapi-sandbox.dl.alipaydev.com/gateway.do?charset=UTF-8&method=alipay.trade.wap.pay&sign=MsOD46CPN8L7vkI%2BddldBHOC3Woulbgsrm7xhQhAIvIHHv%2F4zHXzMAfFgJIOd2xVaINhk9yY%2FF70QDd65AbU09uWpEFoAZhGNO%2BZVKz%2FkD03mblk1EhGtoeduV4MY9ugZZXT1YlETeOQ%2FGZc99lap5R0GgK%2Bgq4b88lICdDbof1YyYuN7wRYzcdMVQdVxRXotX05oHGUKsQwGJ8WzooSCKK%2B733SOQYRn47cTXYiQb3FYHAk7Qln7KyxJa%2B%2FKMl%2Bva9P3k39CEgVQCdwaKAsfMjZMg%3D%3D&version=1.0&app_id=9021000122696227&sign_type=RSA2&timestamp=2024-05-15+10%3A11%3A35&alipay_sdk=alipay-sdk-java-4.39.60.ALL&format=json\">\n<input type=\"hidden\" name=\"biz_content\" value=\"{&quot;out_trade_no&quot;:&quot;20240515100011240240504877088768&quot;,&quot;total_amount&quot;:&quot;0.01&quot;,&quot;subject&quot;:&quot;cs&quot;,&quot;product_code&quot;:&quot;QUICK_WAP_WAY&quot;}\">\n<input type=\"submit\" value=\"立即支付\" style=\"display:none\" >\n</form>\n<script>document.forms[0].submit();</script>"
+        "orderNo": "1243230959621373952",
+         # 支付宝H5支付连接
+        "pageData": "https://openapi-sandbox.dl.alipaydev.com/gateway.do?alipay_sdk=alipay-sdk-java-4.39.60.ALL&app_id=9021000122696227&biz_content=%7B%22out_trade_no%22%3A%2220240523100011243230961986961408%22%2C%22total_amount%22%3A%220.01%22%2C%22subject%22%3A%22cs%22%2C%22product_code%22%3A%22QUICK_WAP_WAY%22%7D&charset=UTF-8&format=json&method=alipay.trade.wap.pay&notify_url=http%3A%2F%2Fqvi7gj.natappfree.cc%2Fnotify%2Falipay&sign=RQSWnvFBgtaRMt7HZKfVAu8xUYDld%2Flj%W9xP5xGDOHNyExPfhJY%2FZ2Z8At2Pf1PN9qpekJEbCRmBrLS2x8poeVoAlsL3qkDi0jrrAMSUuo5XlSnKqK4Fsd%2ByTy9y7Nak7eLFVUGSU77vlsCFQ7xkbuI%2BcWUsbF4pD3c4Z7dbZXB5lN%2FHeFdhtJsi3LP5mVPgJUkt0iDeiBYeEnHSlro3yqm6eD4Xb5ANKxg%2FMyz%2BLkRrvABWaunKTwJEaSlIm9mZBbxtyv3CGqPlMm7q4CExlaX9deZCyLI4kQ%3D%3D&sign_type=RSA2&timestamp=2024-05-23+15%3A55%3A59&version=1.0"
     }
 }
 ```
+
+- 查单
+
+- 退款
 
 ## 目录结构
 
@@ -123,15 +117,10 @@ response:{
 |      └PaymentType.java # 标识支付类型注解
 ```
 
-
-## 开发记录
-
-| doing                    | todo                     | done                      |
-|--------------------------| ------------------------ |---------------------------|
-| \                        | \                        | 系统构建（基本交易接口定义、配置类、日志打印功能） |
-| \                        | 支付宝H5支付通知处理逻辑 | 支付宝H5创建订单接口逻辑             |
-| 交易入口根据标识注解分发到具体外部交易实现类逻辑 | \                        | \                         |
-| \                        | \                        | gateway接口分发请求到具体外部交易实现类   |
-
 ## 帮助
-如果您恰巧熟悉支付系统，有更好的项目实践，想要作为项目贡献者，请提供PR，谢谢。
+如果您恰巧熟悉支付系统，有更好的项目实践，
+有兴趣想要作为项目贡献者，请提供PR，谢谢。
+
+## Support
+If you happen to be familiar with payment systems, 
+have better project practices, and are interested in being a project contributor, please provide PR, thanks.
