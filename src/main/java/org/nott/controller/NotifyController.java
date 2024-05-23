@@ -8,6 +8,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.nott.common.CommonUtils;
 import org.nott.config.AlipayConfig;
+import org.nott.constant.AlipayBusinessConstant;
 import org.nott.exception.PayException;
 import org.nott.payment.alipay.AlipayService;
 import org.slf4j.Logger;
@@ -56,7 +57,7 @@ public class NotifyController {
                 params.put(name, valueStr);
             }
 
-            boolean flag = AlipaySignature.rsaCheckV1(params, alipayConfig.getPublicKey(), "utf-8","RSA2");
+            boolean flag = AlipaySignature.rsaCheckV1(params, alipayConfig.getPublicKey(), AlipayBusinessConstant.Common.UTF8,AlipayBusinessConstant.Common.RSA2);
             if(!flag){
                 throw new PayException("Alipay notify sign verified failed.");
             }

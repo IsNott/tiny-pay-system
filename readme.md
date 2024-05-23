@@ -19,23 +19,22 @@
 | pay_transaction_info | 外部交易记录|
 
 ## 使用
-目前仅支持支付宝H5订单创建/支付，支付业务通知、退款接口。
-
-退款业务通知处理还在开发中
+目前仅支持支付宝H5业务。
 
 - 交易
 
 以支付宝H5为例，支付时调用交易网关接口
 ```
-path:/transaction/gateway
-body:{
+path: /transaction/gateway
+method: POST
+body: {
     "paymentCode":"alipay",
     "paymentType":"h5",
     "subjectName":"cs",
     "amount":"0.01"
 }
 # 返回内容以code=200为成功
-{
+response: {
     "code": 200,
     "msg": "success",
     "obj": {
@@ -46,9 +45,50 @@ body:{
 }
 ```
 
-- 查单
+- 查单（目前为本地查询，当回调失败后会出现数据不对的情况）
+```
+path: /transaction/query/{orderNo}
+method: GET
+response: {
+    "code": 200,
+    "msg": "success",
+    "obj": {
+        # 传入的订单号，原样返回
+        "orderNo": "1243335144400486400",
+        # 订单类型 1-支付 2-退款
+        "orderType": 1,
+        # 支付业务代码
+        "paymentCode": "alipay",
+        # 支付业务方式
+        "paymentType": "h5",
+        # 状态 0-初始 1-请求中 2-业务完成 3-失败 4-支付订单退款中 5-支付订单退款完成
+        "payStatus": 5,
+        # 对应的退款订单号
+        "refundOrderNo": "1243335512450662400"
+    }
+}
+```
 
 - 退款
+```
+path: /transaction/refund
+method: POST
+body: {
+    "payOrderNo":1243335144400486400
+}
+response: {
+    "code": 200,
+    "msg": "success",
+    "obj": {
+        # 是否请求成功
+        "requestSuccess": true,
+        # 支付订单号
+        "orgOrderNo": "1243335144400486400",
+        # 退款订单号
+        "refundOrderNo": "1243335512450662400"
+    }
+}
+```
 
 ## 目录结构
 

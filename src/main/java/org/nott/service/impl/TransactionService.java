@@ -54,13 +54,21 @@ public class TransactionService {
 
     public PayTransactionInfo createTransactionByOrder(PayOrderInfo payOrderInfo) {
         boolean isRefund = OrderTypeEnum.REFUND.getCode().equals(payOrderInfo.getOrderType());
-        //todo 关联退款与支付交易记录
+        // 关联退款与支付交易记录
+        String orgTransactionNo;
 
         PayTransactionInfo payTransactionInfo = new PayTransactionInfo();
         payTransactionInfo.setInOrderId(payOrderInfo.getId());
         payTransactionInfo.setTransactionType(payOrderInfo.getOrderType());
         payTransactionInfo.setTransactionNo(TransactionNoFactory.next());
         payTransactionInfo.setTransactionStatus(StatusEnum.INIT.getCode());
+
+        if(isRefund){
+            Long refundOrderNo = payOrderInfo.getOrderNo();
+            PayOrderInfo payOrder = orderService.findPayOrderByRefundOrderNo(refundOrderNo);
+            orgTransactionNo = payOrder.getInTransactionNo();
+            payTransactionInfo.setOrgTransactionNo(orgTransactionNo);
+        }
 
         payTransactionInfoMapper.insert(payTransactionInfo);
 
@@ -130,7 +138,35 @@ public class TransactionService {
     }
 
     private void handleRefundMessage(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {
-        // todo 更新退款记录
+        // 更新退款记录
+        PayTransactionInfo orgPayTransactionInfo = payTransactionInfoMapper.selectById(payTransactionInfoId);
+        String transactionNo = orgPayTransactionInfo.getTransactionNo();
+        PayTransactionInfo refundTransaction = getRefundTransactionByOrgNo(transactionNo);
+        PayOrderInfo orgPayOrder = orderService.getByTransactionNo(transactionNo, OrderTypeEnum.PAY.getCode());
+        PayOrderInfo refundOrder = orderService.getByTransactionNo(refundTransaction.getTransactionNo(), OrderTypeEnum.REFUND.getCode());
+        // 更新原始订单及交易记录
+        orgPayOrder.setPayStatus(StatusEnum.REFUND.getCode());
+        orgPayTransactionInfo.setTransactionStatus(StatusEnum.REFUND.getCode());
+
+        // 更新退款订单及交易记录
+        refundTransaction.setTransactionStatus(RefundStatusEnum.REFUNDED.getCode());
+        refundOrder.setPayStatus(RefundStatusEnum.REFUNDING.getCode());
+
+        orderService.updateById(refundOrder);
+        orderService.updateById(orgPayOrder);
+
+        payTransactionInfoMapper.updateById(refundTransaction);
+        payTransactionInfoMapper.updateById(orgPayTransactionInfo);
+    }
+
+    public PayTransactionInfo getRefundTransactionByOrgNo(String orgTransactionNo){
+        LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<PayTransactionInfo>()
+                .eq(PayTransactionInfo::getOrgTransactionNo, orgTransactionNo);
+        PayTransactionInfo payTransactionInfo = payTransactionInfoMapper.selectOne(wrapper);
+        if(payTransactionInfo == null){
+            throw new PayException("根据原始交易号%s，找不到对应退款交易记录".formatted(orgTransactionNo));
+        }
+        return payTransactionInfo;
     }
 
     private void handlePayMessage(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {

@@ -20,6 +20,7 @@ import org.nott.annotations.Payment;
 import org.nott.annotations.PaymentType;
 import org.nott.annotations.Refund;
 import org.nott.config.AlipayConfig;
+import org.nott.constant.AlipayBusinessConstant;
 import org.nott.dto.RefundOrderDTO;
 import org.nott.dto.TradeNotifyDTO;
 import org.nott.entity.PayOrderInfo;
@@ -84,8 +85,8 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
                     paymentUrl,
                     alipayConfig.getAppId(),
                     alipayConfig.getPrivateKey(),
-                    "json",
-                    "UTF-8",
+                    AlipayBusinessConstant.Common.JSON,
+                    AlipayBusinessConstant.Common.UTF8,
                     alipayConfig.getPublicKey(),
                     alipayConfig.getSignType());
         }
@@ -151,14 +152,14 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         request.setReturnUrl(alipayConfig.getH5ReturnUrl());
         JSONObject bizContent = new JSONObject();
         //商户订单号，商家自定义，保持唯一性
-        bizContent.put("out_trade_no", payTransactionInfo.getTransactionNo());
+        bizContent.put(AlipayBusinessConstant.TradeFiled.OUT_TRADE_NO, payTransactionInfo.getTransactionNo());
         //支付金额，最小值0.01元
-        bizContent.put("total_amount", payOrderInfo.getAmount());
+        bizContent.put(AlipayBusinessConstant.TradeFiled.TOTAL_AMOUNT, payOrderInfo.getAmount());
         //订单标题，不可使用特殊符号
-        bizContent.put("subject", payOrderInfo.getSubjectName());
+        bizContent.put(AlipayBusinessConstant.TradeFiled.SUBJECT, payOrderInfo.getSubjectName());
 
         //手机网站支付默认传值QUICK_WAP_WAY
-        bizContent.put("product_code", "QUICK_WAP_WAY");
+        bizContent.put(AlipayBusinessConstant.TradeFiled.PRODUCT_CODE, "QUICK_WAP_WAY");
 
         request.setBizContent(bizContent.toString());
         response = alipayClient.pageExecute(request, "GET");
@@ -178,8 +179,8 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         String tradeStatus = tradeNotifyDTO.getTrade_status();
         String outTradeNo = tradeNotifyDTO.getOut_trade_no();
         String zfbTradeNo = tradeNotifyDTO.getTrade_no();
-        boolean isTradeFinish = "TRADE_SUCCESS".equals(tradeStatus) ||
-                "TRADE_CLOSED".equals(tradeStatus);
+        boolean isTradeFinish = AlipayBusinessConstant.Trade.SUCCESS.equals(tradeStatus) ||
+                AlipayBusinessConstant.Trade.CLOSED.equals(tradeStatus);
         if (!isTradeFinish) {
             return;
         }
@@ -189,11 +190,15 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
 
         switch (tradeStatus){
             default -> throw new PayException("UnKnown notify Msg");
-            case "TRADE_SUCCESS" -> {
+            case AlipayBusinessConstant.Trade.SUCCESS -> {
                 transactionService.updateTradeStateByACS(zfbTradeNo, outTradeNo);
+                logger.info("成功接收到内部交易号为[{}]的支付宝支付业务通知",outTradeNo);
+                logger.info("正文：\n{}", JSON.toJSONString(notifyParam));
             }
-            case "TRADE_CLOSED" -> {
+            case AlipayBusinessConstant.Trade.CLOSED -> {
                 transactionService.updateRefundStateByACS(zfbTradeNo, tradeNotifyDTO);
+                logger.info("成功接收到内部交易号为[{}]的支付宝退款业务通知",outTradeNo);
+                logger.info("正文：\n{}", JSON.toJSONString(notifyParam));
             }
         }
 

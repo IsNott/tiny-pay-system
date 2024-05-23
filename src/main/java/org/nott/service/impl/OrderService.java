@@ -71,6 +71,17 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         return payOrderInfos.get(0);
     }
 
+    public PayOrderInfo getByTransactionNo(String transactionNo, Integer type) {
+        LambdaUpdateWrapper<PayOrderInfo> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.eq(PayOrderInfo::getInTransactionNo, transactionNo)
+                .eq(PayOrderInfo::getOrderType, type);
+        List<PayOrderInfo> payOrderInfos = payOrderInfoMapper.selectList(wrapper);
+        if (payOrderInfos == null || payOrderInfos.isEmpty()) {
+            throw new PayException(String.format("根据交易号%s，没有找到类型为%s的订单记录", transactionNo, type));
+        }
+        return payOrderInfos.get(0);
+    }
+
     // 生成内部退款单
     public PayOrderInfo initializeRefundOrder(String orderNo) {
         PayOrderInfo payOrder = this.getByOrderNo(orderNo, OrderTypeEnum.PAY.getCode(), StatusEnum.PAY_SUCCESS.getCode());
@@ -86,7 +97,7 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         refundOrderNo = IdWorker.getId();
         PayOrderInfo refundOrder = new PayOrderInfo();
         BeanUtils.copyProperties(payOrder, refundOrder,
-                "id", "updateTime","orderParam", "createTime",
+                "id", "updateTime", "orderParam", "createTime",
                 "orderType", "payStatus", "inTransactionNo");
         refundOrder.setOrderType(OrderTypeEnum.REFUND.getCode());
         refundOrder.setOrderNo(refundOrderNo);
@@ -125,24 +136,25 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         LambdaQueryWrapper<PayOrderInfo> queryWrapper = new LambdaQueryWrapper<PayOrderInfo>().eq(PayOrderInfo::getRefundOrderNo, refundOrderNo)
                 .eq(PayOrderInfo::getPayStatus, StatusEnum.PAY_SUCCESS.getCode());
         PayOrderInfo orgPayOrder = payOrderInfoMapper.selectOne(queryWrapper);
-        if(orgPayOrder == null){
+        if (orgPayOrder == null) {
             throw new PayException(String.format("退款订单号：%s，没有可退款的原始支付记录", refundOrderNo));
         }
         return orgPayOrder;
     }
 
+
     public OrderQueryVo queryOrderStatus(String orderNo) {
         LambdaQueryWrapper<PayOrderInfo> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(PayOrderInfo::getOrderNo,orderNo);
+        wrapper.eq(PayOrderInfo::getOrderNo, orderNo);
         PayOrderInfo orderInfo = payOrderInfoMapper.selectOne(wrapper);
         OrderQueryVo vo = new OrderQueryVo();
-        BeanUtils.copyProperties(orderInfo,vo);
+        BeanUtils.copyProperties(orderInfo, vo);
         //TODO 处于pending的状态需要查询一下外部交易系统
-        if(StatusEnum.PAYING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.PAY.getCode().equals(orderInfo.getOrderType())){
+        if (StatusEnum.PAYING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.PAY.getCode().equals(orderInfo.getOrderType())) {
 
         }
-        if((StatusEnum.REFUNDING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.PAY.getCode().equals(orderInfo.getOrderType())) ||
-                (RefundStatusEnum.REFUNDING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.REFUND.getCode().equals(orderInfo.getOrderType()))){
+        if ((StatusEnum.REFUNDING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.PAY.getCode().equals(orderInfo.getOrderType())) ||
+                (RefundStatusEnum.REFUNDING.getCode().equals(vo.getPayStatus()) && OrderTypeEnum.REFUND.getCode().equals(orderInfo.getOrderType()))) {
 
         }
 
@@ -155,7 +167,7 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
                 .eq(PayOrderInfo::getPayStatus, StatusEnum.REFUNDING.getCode());
         PayOrderInfo orderInfo = payOrderInfoMapper.selectOne(wrapper);
         // 查找支付订单状态是否已经被更新为退款中
-        if(orderInfo != null){
+        if (orderInfo != null) {
             return;
         }
 
