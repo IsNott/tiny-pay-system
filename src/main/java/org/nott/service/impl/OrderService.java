@@ -20,6 +20,7 @@ import org.nott.vo.OrderQueryVo;
 import org.nott.vo.PayOrderInfoVo;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -76,7 +77,7 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         Long refundOrderNo = payOrder.getRefundOrderNo();
         boolean alreadyHasRefund = payOrder.getRefundOrderNo() != null;
         if (alreadyHasRefund) {
-            PayOrderInfo refundOrder = this.getByOrderNo(orderNo, OrderTypeEnum.REFUND.getCode(), StatusEnum.INIT.getCode());
+            PayOrderInfo refundOrder = this.getByOrderNo(String.valueOf(payOrder.getRefundOrderNo()), OrderTypeEnum.REFUND.getCode(), StatusEnum.INIT.getCode());
             if (refundOrder == null) {
                 throw new PayException(String.format("退款单：%s，已有退款中记录，请稍后重试", refundOrderNo));
             }
@@ -122,7 +123,7 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
 
     public PayOrderInfo findPayOrderByRefundOrderNo(Long refundOrderNo) {
         LambdaQueryWrapper<PayOrderInfo> queryWrapper = new LambdaQueryWrapper<PayOrderInfo>().eq(PayOrderInfo::getRefundOrderNo, refundOrderNo)
-                .eq(PayOrderInfo::getPayStatus, StatusEnum.PAY_SUCCESS);
+                .eq(PayOrderInfo::getPayStatus, StatusEnum.PAY_SUCCESS.getCode());
         PayOrderInfo orgPayOrder = payOrderInfoMapper.selectOne(queryWrapper);
         if(orgPayOrder == null){
             throw new PayException(String.format("退款订单号：%s，没有可退款的原始支付记录", refundOrderNo));
@@ -146,5 +147,33 @@ public class OrderService extends ServiceImpl<PayOrderInfoMapper, PayOrderInfo> 
         }
 
         return vo;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateRefundStatus(String payOrderNo, String refundOrderNo) {
+        LambdaQueryWrapper<PayOrderInfo> wrapper = new LambdaQueryWrapper<PayOrderInfo>().eq(PayOrderInfo::getOrderNo, payOrderNo)
+                .eq(PayOrderInfo::getPayStatus, StatusEnum.REFUNDING.getCode());
+        PayOrderInfo orderInfo = payOrderInfoMapper.selectOne(wrapper);
+        // 查找支付订单状态是否已经被更新为退款中
+        if(orderInfo != null){
+            return;
+        }
+
+        PayOrderInfo orgPayOrder = getByOrderNo(payOrderNo, OrderTypeEnum.PAY.getCode(), StatusEnum.PAY_SUCCESS.getCode());
+        PayOrderInfo refundOrder = getByOrderNo(refundOrderNo, OrderTypeEnum.REFUND.getCode(), StatusEnum.INIT.getCode());
+
+        PayTransactionInfo payTransactionInfo = transactionService.getSingleTransactionByOrder(orgPayOrder.getId());
+        PayTransactionInfo refundTransactionInfo = transactionService.getSingleTransactionByOrder(refundOrder.getId());
+
+        orgPayOrder.setPayStatus(StatusEnum.REFUNDING.getCode());
+        refundOrder.setPayStatus(RefundStatusEnum.REFUNDING.getCode());
+        payTransactionInfo.setTransactionStatus(StatusEnum.REFUNDING.getCode());
+        refundTransactionInfo.setTransactionStatus(RefundStatusEnum.REFUNDING.getCode());
+        payTransactionInfoMapper.updateById(payTransactionInfo);
+        payTransactionInfoMapper.updateById(refundTransactionInfo);
+
+        payOrderInfoMapper.updateById(orgPayOrder);
+        payOrderInfoMapper.updateById(refundOrder);
+
     }
 }

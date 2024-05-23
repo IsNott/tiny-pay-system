@@ -7,6 +7,8 @@ import jakarta.annotation.Resource;
 import org.nott.dto.TradeNotifyDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayTransactionInfo;
+import org.nott.enums.OrderTypeEnum;
+import org.nott.enums.RefundStatusEnum;
 import org.nott.enums.StatusEnum;
 import org.nott.exception.PayException;
 import org.nott.id.TransactionNoFactory;
@@ -32,6 +34,9 @@ public class TransactionService {
     @Resource
     private PayOrderInfoMapper payOrderInfoMapper;
 
+    @Resource
+    private OrderService orderService;
+
     public List<PayTransactionInfo> getTransactionByOrder(Long orderId){
         LambdaQueryWrapper<PayTransactionInfo> wrapper = new LambdaQueryWrapper<PayTransactionInfo>()
                 .eq(PayTransactionInfo::getInOrderId, orderId);
@@ -39,7 +44,18 @@ public class TransactionService {
         return transactionInfos;
     }
 
+    public PayTransactionInfo getSingleTransactionByOrder(Long orderId){
+        List<PayTransactionInfo> transactionByOrder = this.getTransactionByOrder(orderId);
+        if(transactionByOrder == null || transactionByOrder.isEmpty()){
+            throw new PayException(String.format("根据OrderId:[%s]找不到交易数据", orderId));
+        }
+        return transactionByOrder.get(0);
+    }
+
     public PayTransactionInfo createTransactionByOrder(PayOrderInfo payOrderInfo) {
+        boolean isRefund = OrderTypeEnum.REFUND.getCode().equals(payOrderInfo.getOrderType());
+        //todo 关联退款与支付交易记录
+
         PayTransactionInfo payTransactionInfo = new PayTransactionInfo();
         payTransactionInfo.setInOrderId(payOrderInfo.getId());
         payTransactionInfo.setTransactionType(payOrderInfo.getOrderType());
@@ -53,17 +69,42 @@ public class TransactionService {
         return payTransactionInfo;
     }
 
-    public int updateTradeStateByACS(Long id, TradeNotifyDTO tradeNotifyDTO) {
+    public int updateTradeStateByACS(String outTradeNo, String inTransactionNo) {
         LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<>();
         wrapper.set(PayTransactionInfo::getNotifyTime,new Date());
-        wrapper.set(PayTransactionInfo::getOutTransactionNo,tradeNotifyDTO.getTrade_no());
-        wrapper.eq(PayTransactionInfo::getId,id);
+        wrapper.set(PayTransactionInfo::getOutTransactionNo,outTradeNo);
+        wrapper.eq(PayTransactionInfo::getTransactionNo,inTransactionNo);
         wrapper.isNull(PayTransactionInfo::getOutTransactionNo);
         int update = payTransactionInfoMapper.update(wrapper);
         if(update == 0){
-            throw new PayException(String.format("交易%s已被其他线程更新，放弃当前通知", tradeNotifyDTO.getOut_trade_no()));
+            throw new PayException(String.format("交易%s已被其他线程更新，放弃当前通知", inTransactionNo));
         }
         return update;
+    }
+
+    public void updateRefundStateByACS(String outTradeNo, TradeNotifyDTO tradeNotifyDTO) {
+        String payTradeNo = tradeNotifyDTO.getOut_trade_no();
+        LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<PayTransactionInfo>()
+                .eq(PayTransactionInfo::getTransactionNo,payTradeNo)
+                .eq(PayTransactionInfo::getTransactionStatus,StatusEnum.REFUNDING);
+        PayTransactionInfo payTransactionInfo = payTransactionInfoMapper.selectOne(wrapper);
+        if(payTransactionInfo == null){
+            return;
+        }
+        LambdaQueryWrapper<PayOrderInfo> queryWrapper = new LambdaQueryWrapper<PayOrderInfo>()
+                .eq(PayOrderInfo::getInTransactionNo, payTransactionInfo.getTransactionNo())
+                .eq(PayOrderInfo::getPayStatus,StatusEnum.REFUNDING);
+        PayOrderInfo payOrderInfo = payOrderInfoMapper.selectOne(queryWrapper);
+        if(payOrderInfo == null){
+            return;
+        }
+        Long refundOrderNo = payOrderInfo.getRefundOrderNo();
+        PayOrderInfo refundOrder = orderService.getByOrderNo(String.valueOf(refundOrderNo), OrderTypeEnum.REFUND.getCode(), RefundStatusEnum.REFUNDING.getCode());
+        if(refundOrder == null){
+            return;
+        }
+        String transactionNo = refundOrder.getInTransactionNo();
+        this.updateTradeStateByACS(outTradeNo,transactionNo);
     }
 
     public PayTransactionInfo checkIfExist(String outTradeNo) {
@@ -82,7 +123,14 @@ public class TransactionService {
             case "TRADE_SUCCESS" -> {
                 this.handlePayMessage(payTransactionInfoId,tradeNotifyDTO);
             }
+            case "TRADE_CLOSED" -> {
+                this.handleRefundMessage(payTransactionInfoId, tradeNotifyDTO);
+            }
         }
+    }
+
+    private void handleRefundMessage(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {
+        // todo 更新退款记录
     }
 
     private void handlePayMessage(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {
@@ -96,4 +144,6 @@ public class TransactionService {
         payTransactionInfoMapper.updateById(payTransactionInfo);
         payOrderInfoMapper.updateById(orderInfo);
     }
+
+
 }

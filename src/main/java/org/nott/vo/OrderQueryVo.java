@@ -16,6 +16,8 @@ public class OrderQueryVo {
 
     private String paymentCode;
 
+    private String paymentType;
+
     private Integer payStatus;
 
     private Long refundOrderNo;

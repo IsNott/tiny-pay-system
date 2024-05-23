@@ -1,11 +1,15 @@
 package org.nott.support;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.google.common.base.CaseFormat;
 import org.apache.commons.lang3.ArrayUtils;
 
 import org.nott.annotations.PaymentType;
 import org.nott.common.SpringContextUtils;
+import org.nott.entity.PayOrderInfo;
 import org.nott.exception.PayException;
+import org.nott.mapper.PayOrderInfoMapper;
 import org.nott.result.Result;
 
 import java.lang.reflect.Method;
@@ -57,6 +61,13 @@ public class PayServiceContext {
     }
 
     public static Result invokePaymentTypeMethod(String code, String type, Object... args) {
+        PayOrderInfo payOrderInfo = (PayOrderInfo) args[0];
+        PayOrderInfoMapper bean = SpringContextUtils.getBean("payOrderInfoMapper", PayOrderInfoMapper.class);
+        LambdaUpdateWrapper<PayOrderInfo> wrapper = new LambdaUpdateWrapper<PayOrderInfo>()
+                .eq(PayOrderInfo::getId, payOrderInfo.getId())
+                .set(PayOrderInfo::getPaymentCode, code)
+                .set(PayOrderInfo::getPaymentType, type);
+        bean.update(wrapper);
         Method serviceMethod = findServiceMethod(code, type);
         Object service = instanceService(code);
         Result result = null;

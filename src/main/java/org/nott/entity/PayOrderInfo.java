@@ -67,6 +67,11 @@ public class PayOrderInfo implements Serializable {
     private String paymentCode;
 
     /**
+     * 支付业务方式
+     */
+    private String paymentType;
+
+    /**
      * 订单号
      */
     private Long orderNo;

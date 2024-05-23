@@ -7,13 +7,18 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.domain.AlipayTradeFastpayRefundQueryModel;
+import com.alipay.api.domain.AlipayTradeRefundModel;
 import com.alipay.api.request.AlipayTradeFastpayRefundQueryRequest;
+import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.request.AlipayTradeWapPayRequest;
 import com.alipay.api.response.AlipayTradeFastpayRefundQueryResponse;
+import com.alipay.api.response.AlipayTradeRefundResponse;
 import com.alipay.api.response.AlipayTradeWapPayResponse;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import jakarta.annotation.Resource;
 import org.nott.annotations.Payment;
 import org.nott.annotations.PaymentType;
+import org.nott.annotations.Refund;
 import org.nott.config.AlipayConfig;
 import org.nott.dto.RefundOrderDTO;
 import org.nott.dto.TradeNotifyDTO;
@@ -41,6 +46,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +79,7 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
     public AlipayClient getAlipayClient(String paymentUrl) {
-        if(this.alipayClient == null){
+        if (this.alipayClient == null) {
             this.alipayClient = new DefaultAlipayClient(
                     paymentUrl,
                     alipayConfig.getAppId(),
@@ -169,14 +175,28 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
     public void handleNotifyMsg(Map<String, String> notifyParam) {
         // 回调处理
         TradeNotifyDTO tradeNotifyDTO = JSON.parseObject(JSON.toJSONString(notifyParam), TradeNotifyDTO.class);
-        boolean isTradeSuccess = "TRADE_SUCCESS".equals(tradeNotifyDTO.getTrade_status());
-        if (!isTradeSuccess) {
+        String tradeStatus = tradeNotifyDTO.getTrade_status();
+        String outTradeNo = tradeNotifyDTO.getOut_trade_no();
+        String zfbTradeNo = tradeNotifyDTO.getTrade_no();
+        boolean isTradeFinish = "TRADE_SUCCESS".equals(tradeStatus) ||
+                "TRADE_CLOSED".equals(tradeStatus);
+        if (!isTradeFinish) {
             return;
         }
-        PayTransactionInfo payTransactionInfo = transactionService.checkIfExist(tradeNotifyDTO.getOut_trade_no());
+
+        PayTransactionInfo payTransactionInfo = transactionService.checkIfExist(outTradeNo);
         final Long payTransactionInfoId = payTransactionInfo.getId();
 
-        transactionService.updateTradeStateByACS(payTransactionInfoId, tradeNotifyDTO);
+        switch (tradeStatus){
+            default -> throw new PayException("UnKnown notify Msg");
+            case "TRADE_SUCCESS" -> {
+                transactionService.updateTradeStateByACS(zfbTradeNo, outTradeNo);
+            }
+            case "TRADE_CLOSED" -> {
+                transactionService.updateRefundStateByACS(zfbTradeNo, tradeNotifyDTO);
+            }
+        }
+
         // 异步处理业务逻辑
         threadPoolTaskExecutor.execute(() -> {
             // 更新信息
@@ -185,6 +205,7 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         });
     }
 
+    @Refund
     @Override
     public RefundResult doRefund(RefundOrderDTO refundOrderDTO) {
         String payOrderNo = refundOrderDTO.getPayOrderNo();
@@ -202,35 +223,39 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         // 原订单的支付方式
         PayPaymentType payPaymentType = paymentService.findPaymentByCode(payOrderInfo.getPaymentCode()).get(0);
         // 组装退款信息和执行请求
-        AlipayTradeFastpayRefundQueryResponse response = this.assemableRefundRequestAndExecute(inTransactionNo, payPaymentType,refundOrder);
-        // 更新退款记录
-        refundOrder.setPayStatus(RefundStatusEnum.REFUNDING.getCode());
+        AlipayTradeRefundResponse  response = this.assemableRefundRequestAndExecute(inTransactionNo, payPaymentType, refundOrder);
+        logger.info("Alipay refund response:{}", JSON.toJSONString(response));
+
+        // 更新记录
+        orderService.updateRefundStatus(payOrderNo, refundOrderNo);
         // 返回结果
         AlipayRefundResult result = new AlipayRefundResult();
         result.setRefundOrderNo(payOrderInfo.getRefundOrderNo());
         result.setOrgOrderNo(payOrderInfo.getOrderNo());
         result.setRequestSuccess(true);
 
-        // 是否同步执行退款成功，都走异步处理结果接口
-        threadPoolTaskExecutor.execute(()->{
-            JSONObject respJsonObj = JSONObject.parseObject(JSON.toJSONString(response));
-            this.handleNotifyMsg(respJsonObj.toJavaObject(Map.class));
-        });
+//        // 是否同步执行退款成功，都走异步处理结果接口
+//        threadPoolTaskExecutor.execute(() -> {
+//            JSONObject respJsonObj = JSONObject.parseObject(JSON.toJSONString(response));
+//            this.handleNotifyMsg(respJsonObj.toJavaObject(Map.class));
+//        });
         return result;
     }
 
-    private AlipayTradeFastpayRefundQueryResponse assemableRefundRequestAndExecute(String inTransactionNo, PayPaymentType payPaymentType,PayOrderInfo refundOrderInfo) {
+    private AlipayTradeRefundResponse assemableRefundRequestAndExecute(String inTransactionNo, PayPaymentType payPaymentType, PayOrderInfo refundOrderInfo) {
         // 构建退款请求
         AlipayClient alipayClient = getAlipayClient(payPaymentType.getPaymentUrl());
-        AlipayTradeFastpayRefundQueryRequest request = new AlipayTradeFastpayRefundQueryRequest();
-        AlipayTradeFastpayRefundQueryModel model = new AlipayTradeFastpayRefundQueryModel();
+        AlipayTradeRefundRequest request = new AlipayTradeRefundRequest ();
+        AlipayTradeRefundModel model = new AlipayTradeRefundModel();
+        model.setOutRequestNo(IdWorker.get32UUID());
         model.setOutTradeNo(inTransactionNo);
+        model.setRefundReason("正常退款");
+        model.setRefundAmount(refundOrderInfo.getAmount());
         // 设置查询选项
-        List<String> queryOptions = new ArrayList<String>();
-        queryOptions.add("gmt_refund_pay");
+        List<String> queryOptions = Arrays.asList("gmt_refund_pay","refund_detail_item_list");
         model.setQueryOptions(queryOptions);
         request.setBizModel(model);
-        AlipayTradeFastpayRefundQueryResponse response = null;
+        AlipayTradeRefundResponse  response = null;
 
         try {
             response = alipayClient.execute(request);
@@ -239,7 +264,7 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
             throw new PayException("Execute alipay refund request error.");
         }
 
-        if(!response.isSuccess()){
+        if (!response.isSuccess()) {
             throw new PayException("Execute alipay refund request failed.");
         }
 

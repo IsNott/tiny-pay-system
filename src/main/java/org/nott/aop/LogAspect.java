@@ -42,7 +42,7 @@ public class LogAspect {
                String params = JSON.toJSONString(args[0]);
                log.info("{}.{}()[Method Param]：{}", className, methodName, params);
            } catch (Exception e) {
-               log.info("{}.{}()[Method Param Print Error]：{}", className, methodName, e);
+               log.info("{}.{}()[Method Param Print Error]：{}", className, methodName, e.getMessage());
            }
        }
         Object result = pjd.proceed();

@@ -40,6 +40,11 @@ public class PayTransactionInfo implements Serializable {
     private String outNotifyMsg;
 
     /**
+     * 原始交易号
+     */
+    private String orgTransactionNo;
+
+    /**
      * 外部交易号
      */
     private String outTransactionNo;
