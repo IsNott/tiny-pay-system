@@ -182,4 +182,21 @@ public class TransactionService {
     }
 
 
+    public PayTransactionInfo checkAndReturnPayTransaction(PayOrderInfo payOrderInfo) {
+        Long orderNo = payOrderInfo.getOrderNo();
+        PayTransactionInfo payTransactionInfo = null;
+
+        List<PayTransactionInfo> transactionInfos = this.getTransactionByOrder(payOrderInfo.getId());
+        if (transactionInfos.isEmpty()) {
+            throw new PayException(String.format("订单：[%s],没有找到对应的交易记录，请检查", orderNo));
+        }
+
+        // 订单与外部交易记录关系为一对一，如果有支付中的状态，可能是别的线程已经操作过或者已经失败
+        payTransactionInfo = transactionInfos.get(0);
+        Integer transactionStatus = payTransactionInfo.getTransactionStatus();
+        if (!StatusEnum.INIT.getCode().equals(transactionStatus)) {
+            throw new PayException(String.format("订单：[%s],已有支付中/失败状态，请检查后重试", orderNo));
+        }
+        return payTransactionInfo;
+    }
 }

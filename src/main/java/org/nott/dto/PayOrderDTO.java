@@ -21,4 +21,6 @@ public class PayOrderDTO {
 
     private String extra;
 
+    private String buyerId;
+
 }

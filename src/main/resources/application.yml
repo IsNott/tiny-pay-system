@@ -30,6 +30,7 @@ alipay:
   publicKey:
   signType: RSA2
   notifyUrl:
+  h5ReturnUrl:
 
 weixinpay:
   mchId:

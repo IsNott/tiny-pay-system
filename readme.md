@@ -19,7 +19,7 @@
 | pay_transaction_info | 外部交易记录|
 
 ## 使用
-目前仅支持支付宝H5业务。
+目前支持支付宝H5、JSAPI、二维码、APP业务。(二维码退款无业务通知，后续需要增加补偿查询机制)
 
 - 交易
 
@@ -31,7 +31,9 @@ body: {
     "paymentCode":"alipay",
     "paymentType":"h5",
     "subjectName":"cs",
-    "amount":"0.01"
+    "amount":"0.01",
+    # 当JSAPI时需要传入
+    "buyerId":""
 }
 # 返回内容以code=200为成功
 response: {

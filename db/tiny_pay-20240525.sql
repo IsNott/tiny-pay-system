@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : localhost
+ Source Server         : localhost_3306
  Source Server Type    : MySQL
- Source Server Version : 50735 (5.7.35)
+ Source Server Version : 80016
  Source Host           : localhost:3306
  Source Schema         : tiny_pay
 
  Target Server Type    : MySQL
- Target Server Version : 50735 (5.7.35)
+ Target Server Version : 80016
  File Encoding         : 65001
 
- Date: 23/05/2024 18:03:06
+ Date: 25/05/2024 17:40:44
 */
 
 SET NAMES utf8mb4;
@@ -23,13 +23,14 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS `pay_order_info`;
 CREATE TABLE `pay_order_info`  (
   `id` bigint(20) UNSIGNED NOT NULL COMMENT 'id',
-  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
-  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime(0) NULL DEFAULT NULL COMMENT '更新时间',
+  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
   `subject_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '商品名称',
   `amount` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '金额，以元为单位',
   `order_param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL COMMENT '订单内容',
   `payment_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '支付业务方式',
   `payment_code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '支付方式code',
+  `buyer_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL COMMENT '买家id',
   `refund_order_no` bigint(20) NULL DEFAULT NULL COMMENT '退款订单号',
   `order_no` bigint(20) NOT NULL COMMENT '订单号',
   `order_type` tinyint(4) NOT NULL COMMENT '订单类型 1-支付 2-退款',
@@ -61,6 +62,9 @@ CREATE TABLE `pay_payment_type`  (
 -- ----------------------------
 INSERT INTO `pay_payment_type` VALUES (575597796795617281, '支付宝H5', 'h5', 'alipay', 'https://openapi-sandbox.dl.alipaydev.com/gateway.do', NULL);
 INSERT INTO `pay_payment_type` VALUES (575597796795617282, '微信H5', 'h5', 'wx', '\r\nhttps://api.mch.weixin.qq.com/v3/pay/transactions/h5', NULL);
+INSERT INTO `pay_payment_type` VALUES (575597796795617283, '支付宝QR', 'qr', 'alipay', 'sandbox.dl.alipaydev.com/gateway.do', NULL);
+INSERT INTO `pay_payment_type` VALUES (575597796795617284, '支付宝JSAPI', 'jsapi', 'alipay', 'sandbox.dl.alipaydev.com/gateway.do', NULL);
+INSERT INTO `pay_payment_type` VALUES (575597796795617285, '支付宝APP', 'app', 'alipay', 'sandbox.dl.alipaydev.com/gateway.do', NULL);
 
 -- ----------------------------
 -- Table structure for pay_transaction_info
@@ -76,9 +80,9 @@ CREATE TABLE `pay_transaction_info`  (
   `transaction_no` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT '内部交易号',
   `transaction_status` tinyint(4) NULL DEFAULT 0 COMMENT '交易状态 订单状态 0-init 1-paying 2-pay success 3-failed 4-refund',
   `transaction_type` tinyint(4) NOT NULL COMMENT '交易类型 1-支付 2-退款',
-  `notify_time` datetime NULL DEFAULT NULL COMMENT '通知时间',
-  `create_time` datetime NULL DEFAULT NULL COMMENT '创建时间',
-  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  `notify_time` datetime(0) NULL DEFAULT NULL COMMENT '通知时间',
+  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime(0) NULL DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_general_ci ROW_FORMAT = Dynamic;
 

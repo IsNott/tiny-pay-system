@@ -13,5 +13,7 @@ public class CreateOrderDTO {
 
     private String amount;
 
+    private String buyerId;
+
     private String extra;
 }
