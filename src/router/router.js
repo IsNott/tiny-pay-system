@@ -1,16 +1,16 @@
-import Vue from 'vue';
-import { createMemoryHistory, createRouter } from 'vue-router'
-
-import HomeView from 'views/home'
+import VueRouter from 'vue-router'
+import Vue from 'vue'
 
 const routes = [
-  { path: '/home', component: HomeView },
+  { path: '/home', 
+  component: ()=> import('views/home/index.vue') },
 ]
 
-
-const router = createRouter({
-  history: createMemoryHistory(),
-  routes,
+const router = new VueRouter({
+  mode: 'history',
+  routes
 })
+
+Vue.use(VueRouter)
 
 export default router
