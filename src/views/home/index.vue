@@ -1,17 +1,9 @@
 <template>
  <div>
-  <el-row :gutter="12">
-  <el-col :span="8">
-    <el-card shadow="hover">
-      QR-PAY
-    </el-card>
-  </el-col>
-  <el-col :span="8">
-    <el-card shadow="hover">
-      H5-PAY
-    </el-card>
-  </el-col>
-</el-row>
+    <h4>
+      Tiny-Pay
+    </h4>
+    <p>一款简单，小型的支付系统</p>
  </div>
 </template>
 
