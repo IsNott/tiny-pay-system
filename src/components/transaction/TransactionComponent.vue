@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p>创建交易</p>
+    <p>创建{{paymentType}}交易</p>
     <el-form ref="form" :model="form" label-width="80px">
     <el-form-item label="商品名称">
       <el-input v-model="form.subjectName"></el-input>

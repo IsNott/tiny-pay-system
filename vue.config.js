@@ -22,13 +22,16 @@ module.exports = defineConfig({
     host: 'localhost',
     port: 8000,
     https: false,
+    client:{
+      overlay: false
+    },
     proxy: {
         '/api': {
-            target: 'http://127.0.0.1:9999/api/',
+            target: process.env.VUE_APP_BASE_URL,
             ws: true,
             changOrigin: true, //允许跨域
             pathRewrite: {
-                '^/api': '' //请求的时候使用这个api就可以
+                '^/api': ''
             }
         }
     }

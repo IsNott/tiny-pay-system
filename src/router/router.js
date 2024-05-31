@@ -4,7 +4,8 @@ import Vue from 'vue'
 const routes = [
   { path: '/',component: ()=> import('views/home/index.vue') },
   { path: '/home',component: ()=> import('views/home/index.vue') },
-  { path: '/qr',component: ()=> import('views/qr-pay/index.vue') }
+  { path: '/qr',component: ()=> import('views/qr-pay/index.vue') },
+  { path: '/h5',component: ()=> import('views/h5-pay/index.vue')}
 ]
 
 const router = new VueRouter({

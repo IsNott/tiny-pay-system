@@ -69,6 +69,15 @@ export default {
                 path:'/qr',
             })
           }
+          break;
+        }
+        case "2":{
+          if(this.$route.path!='/h5'){
+            this.$router.push({
+                path:'/h5',
+            })
+          }
+          break;
         }
       }
     }
