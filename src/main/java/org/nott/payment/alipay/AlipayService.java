@@ -1,7 +1,6 @@
 package org.nott.payment.alipay;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -17,12 +16,13 @@ import org.nott.annotations.Refund;
 import org.nott.config.AlipayConfig;
 import org.nott.constant.AlipayBusinessConstant;
 import org.nott.dto.RefundOrderDTO;
-import org.nott.dto.TradeNotifyDTO;
+import org.nott.dto.AliTradeNotifyDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayPaymentType;
 import org.nott.entity.PayTransactionInfo;
+import org.nott.enums.BusinessEnum;
 import org.nott.enums.OrderTypeEnum;
-import org.nott.enums.RefundStatusEnum;
+import org.nott.enums.OutTradePlatform;
 import org.nott.enums.StatusEnum;
 import org.nott.exception.PayException;
 import org.nott.result.RefundResult;
@@ -34,12 +34,10 @@ import org.nott.service.impl.PaymentService;
 import org.nott.service.impl.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.BeanUtils;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -306,10 +304,10 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
     @Transactional(rollbackFor = Exception.class)
     public void handleNotifyMsg(Map<String, String> notifyParam) {
         // 回调处理
-        TradeNotifyDTO tradeNotifyDTO = JSON.parseObject(JSON.toJSONString(notifyParam), TradeNotifyDTO.class);
-        String tradeStatus = tradeNotifyDTO.getTrade_status();
-        String outTradeNo = tradeNotifyDTO.getOut_trade_no();
-        String zfbTradeNo = tradeNotifyDTO.getTrade_no();
+        AliTradeNotifyDTO aliPayTradeNotifyDTO = JSON.parseObject(JSON.toJSONString(notifyParam), AliTradeNotifyDTO.class);
+        String tradeStatus = aliPayTradeNotifyDTO.getTrade_status();
+        String outTradeNo = aliPayTradeNotifyDTO.getOut_trade_no();
+        String zfbTradeNo = aliPayTradeNotifyDTO.getTrade_no();
         boolean isTradeFinish = AlipayBusinessConstant.Trade.SUCCESS.equals(tradeStatus) ||
                 AlipayBusinessConstant.Trade.CLOSED.equals(tradeStatus);
         if (!isTradeFinish) {
@@ -317,7 +315,6 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         }
 
         PayTransactionInfo payTransactionInfo = transactionService.checkIfExist(outTradeNo);
-        final Long payTransactionInfoId = payTransactionInfo.getId();
 
         switch (tradeStatus){
             default -> throw new PayException("UnKnown notify Msg");
@@ -328,17 +325,28 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
                 logger.info("正文：\n{}", JSON.toJSONString(notifyParam));
             }
             case AlipayBusinessConstant.Trade.CLOSED -> {
-                transactionService.updateRefundStateByACS(zfbTradeNo, tradeNotifyDTO);
+                transactionService.updateRefundStateByACS(zfbTradeNo, aliPayTradeNotifyDTO);
                 logger.info("成功接收到内部交易号为[{}]的支付宝退款业务通知",outTradeNo);
                 logger.info("业务：[退款]");
                 logger.info("正文：\n{}", JSON.toJSONString(notifyParam));
             }
         }
 
+        aliPayTradeNotifyDTO.setOutTradeNo(outTradeNo);
+        aliPayTradeNotifyDTO.setInTradeNo(zfbTradeNo);
+        aliPayTradeNotifyDTO.setOutTradePlatform(OutTradePlatform.ALIPAY);
+        aliPayTradeNotifyDTO.setPayTransactionInfoId(payTransactionInfo.getId());
+        if(tradeStatus.equals(AlipayBusinessConstant.Trade.SUCCESS)){
+            aliPayTradeNotifyDTO.setBusinessEnum(BusinessEnum.PAY);
+        }
+        if(tradeStatus.equals(AlipayBusinessConstant.Trade.CLOSED)){
+            aliPayTradeNotifyDTO.setBusinessEnum(BusinessEnum.PAY);
+        }
+
         // 异步处理业务逻辑
         threadPoolTaskExecutor.execute(() -> {
             // 更新信息
-            transactionService.updateTradeBusinessInfo(payTransactionInfoId, tradeNotifyDTO);
+            transactionService.updateTradeBusinessInfo(aliPayTradeNotifyDTO);
             // 交互第三方...
         });
     }

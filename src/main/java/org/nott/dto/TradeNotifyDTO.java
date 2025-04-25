@@ -1,58 +1,26 @@
 package org.nott.dto;
 
 import lombok.Data;
+import org.nott.enums.BusinessEnum;
+import org.nott.enums.OutTradePlatform;
 
 /**
  * @author Nott
- * @date 2024-5-22
+ * @date 2025-4-25
  */
 
 @Data
 public class TradeNotifyDTO {
 
-    private String gmt_create;
+    private Long payTransactionInfoId;
 
-    private String charset;
+    private String inTradeNo;
 
-    private String seller_email;
+    private String outTradeNo;
 
-    private String subject;
+    private String tradeStatus;
 
-    private String buyer_id;
+    private OutTradePlatform outTradePlatform;
 
-    private String invoice_amount;
-
-    private String notify_id;
-
-    private String fund_bill_list;
-
-    private String notify_type;
-
-    private String trade_status;
-
-    private String receipt_amount;
-
-    private String buyer_pay_amount;
-
-    private String app_id;
-
-    private String seller_id;
-
-    private String gmt_payment;
-
-    private String notify_time;
-
-    private String version;
-
-    private String out_trade_no;
-
-    private String total_amount;
-
-    private String trade_no;
-
-    private String auth_app_id;
-
-    private String buyer_logon_id;
-
-    private String point_amount;
+    private BusinessEnum businessEnum;
 }

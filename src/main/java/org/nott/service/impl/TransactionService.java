@@ -7,9 +7,7 @@ import jakarta.annotation.Resource;
 import org.nott.dto.TradeNotifyDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayTransactionInfo;
-import org.nott.enums.OrderTypeEnum;
-import org.nott.enums.RefundStatusEnum;
-import org.nott.enums.StatusEnum;
+import org.nott.enums.*;
 import org.nott.exception.PayException;
 import org.nott.id.TransactionNoFactory;
 import org.nott.mapper.PayOrderInfoMapper;
@@ -90,8 +88,8 @@ public class TransactionService {
         return update;
     }
 
-    public void updateRefundStateByACS(String outTradeNo, TradeNotifyDTO tradeNotifyDTO) {
-        String payTradeNo = tradeNotifyDTO.getOut_trade_no();
+    public void updateRefundStateByACS(String outTradeNo, TradeNotifyDTO notifyDTO) {
+        String payTradeNo = notifyDTO.getOutTradeNo();
         LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<PayTransactionInfo>()
                 .eq(PayTransactionInfo::getTransactionNo,payTradeNo)
                 .eq(PayTransactionInfo::getTransactionStatus,StatusEnum.REFUNDING);
@@ -124,20 +122,24 @@ public class TransactionService {
         return payTransactionInfo;
     }
 
-    public void updateTradeBusinessInfo(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {
-        String tradeStatus = tradeNotifyDTO.getTrade_status();
-        switch (tradeStatus){
-            default -> throw new PayException("Unknown Trade State from Alipay notify message");
-            case "TRADE_SUCCESS" -> {
-                this.handlePayMessage(payTransactionInfoId,tradeNotifyDTO);
+    public void updateTradeBusinessInfo(TradeNotifyDTO notifyDTO) {
+        OutTradePlatform outTradePlatform = notifyDTO.getOutTradePlatform();
+        switch (outTradePlatform){
+            case ALIPAY -> {
+                if (notifyDTO.getBusinessEnum() == null) {
+                    throw new PayException("支付宝通知消息中没有业务类型");
+                }
+                if (notifyDTO.getBusinessEnum() == BusinessEnum.PAY && "TRADE_SUCCESS".equals(notifyDTO.getTradeStatus())) {
+                    this.updateTradeStateByACS(notifyDTO.getOutTradeNo(), notifyDTO.getInTradeNo());
+                } else if (notifyDTO.getBusinessEnum() == BusinessEnum.REFUND && "TRADE_CLOSED".equals(notifyDTO.getTradeStatus())) {
+                    this.handleRefundMessage(notifyDTO.getPayTransactionInfoId(), notifyDTO);
+                }
             }
-            case "TRADE_CLOSED" -> {
-                this.handleRefundMessage(payTransactionInfoId, tradeNotifyDTO);
-            }
+            default -> throw new PayException("不支持的支付平台");
         }
     }
 
-    private void handleRefundMessage(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {
+    private void handleRefundMessage(Long payTransactionInfoId, TradeNotifyDTO notifyDTO) {
         // 更新退款记录
         PayTransactionInfo orgPayTransactionInfo = payTransactionInfoMapper.selectById(payTransactionInfoId);
         String transactionNo = orgPayTransactionInfo.getTransactionNo();
@@ -169,10 +171,10 @@ public class TransactionService {
         return payTransactionInfo;
     }
 
-    private void handlePayMessage(Long payTransactionInfoId, TradeNotifyDTO tradeNotifyDTO) {
+    private void handlePayMessage(Long payTransactionInfoId, TradeNotifyDTO notifyDTO) {
         // 更新交易记录
         PayTransactionInfo payTransactionInfo = payTransactionInfoMapper.selectById(payTransactionInfoId);
-        payTransactionInfo.setOutNotifyMsg(JSON.toJSONString(tradeNotifyDTO));
+        payTransactionInfo.setOutNotifyMsg(JSON.toJSONString(notifyDTO));
         payTransactionInfo.setTransactionStatus(StatusEnum.PAY_SUCCESS.getCode());
         // 更新订单
         PayOrderInfo orderInfo = payOrderInfoMapper.selectById(payTransactionInfo.getInOrderId());

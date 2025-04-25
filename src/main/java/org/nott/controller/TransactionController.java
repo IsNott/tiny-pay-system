@@ -2,11 +2,13 @@ package org.nott.controller;
 
 import jakarta.annotation.Resource;
 import org.nott.common.R;
+import org.nott.dto.GatewayBusinessDTO;
 import org.nott.dto.PayOrderDTO;
 import org.nott.dto.CreateOrderDTO;
 import org.nott.dto.RefundOrderDTO;
 import org.nott.entity.PayOrderInfo;
 import org.nott.entity.PayPaymentType;
+import org.nott.enums.BusinessEnum;
 import org.nott.enums.OrderTypeEnum;
 import org.nott.enums.StatusEnum;
 import org.nott.result.Result;
@@ -29,7 +31,26 @@ public class TransactionController {
     private PaymentService paymentService;
 
     @RequestMapping(path = "gateway", method = RequestMethod.POST)
-    public R<?> gateway(@RequestBody PayOrderDTO payOrderDTO) {
+    public R<?> gateway(@RequestBody GatewayBusinessDTO dto){
+        BusinessEnum business = dto.getBusiness();
+        switch (business){
+            case PAY:
+                PayOrderDTO payOrderDTO = (PayOrderDTO) dto.getParam();
+                return pay(payOrderDTO);
+            case REFUND:
+                RefundOrderDTO refundOrderDTO = (RefundOrderDTO) dto.getParam();
+                return refund(refundOrderDTO);
+            case QUERY:
+                String orderNo = dto.getParam() + "";
+                return query(orderNo);
+            default:
+                return R.failure("不支持的业务类型");
+        }
+
+    }
+
+//    @RequestMapping(path = "pay", method = RequestMethod.POST)
+    public R<?> pay(@RequestBody PayOrderDTO payOrderDTO) {
         CreateOrderDTO createOrderDTO = new CreateOrderDTO();
         BeanUtils.copyProperties(payOrderDTO,createOrderDTO);
         // 创建订单
@@ -41,13 +62,13 @@ public class TransactionController {
         return R.okData(result);
     }
 
-    @RequestMapping(path = "query/{orderNo}", method = RequestMethod.GET)
+//    @RequestMapping(path = "query/{orderNo}", method = RequestMethod.GET)
     public R<?> query(@PathVariable String orderNo){
         OrderQueryVo vo = orderService.queryOrderStatus(orderNo);
         return R.okData(vo);
     }
 
-    @RequestMapping(path = "refund", method = RequestMethod.POST)
+//    @RequestMapping(path = "refund", method = RequestMethod.POST)
     public R<?> refund(@RequestBody RefundOrderDTO refundOrderDTO) {
         PayOrderInfo refundOrder = orderService.initializeRefundOrder(refundOrderDTO.getPayOrderNo());
         PayOrderInfo orgPayOrder = orderService.findPayOrderByRefundOrderNo(refundOrder.getOrderNo());

@@ -8,7 +8,7 @@ import lombok.Data;
  */
 
 @Data
-public class RefundOrderDTO {
+public class RefundOrderDTO implements Param {
 
     private String payOrderNo;
 

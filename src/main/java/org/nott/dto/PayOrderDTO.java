@@ -9,7 +9,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-public class PayOrderDTO {
+public class PayOrderDTO implements Param {
 
     private String paymentCode;
 
@@ -21,6 +21,14 @@ public class PayOrderDTO {
 
     private String extra;
 
-    private String buyerId;
+    private String uniqueId;
+
+    private String notifyUrl;
+
+    private String returnUrl;
+
+    private String orderContext;
+
+    private String clientInfo;
 
 }
