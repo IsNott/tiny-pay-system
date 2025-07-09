@@ -225,7 +225,7 @@ public class AlipayService extends AbstractPaymentService implements H5PayServic
         model.setOutTradeNo(payTransactionInfo.getTransactionNo());
         model.setProductCode("JSAPI_PAY");
         model.setOpAppId(alipayConfig.getAppId());
-        model.setOpBuyerOpenId(payOrderInfo.getBuyerId());
+//        model.setOpBuyerOpenId(payOrderInfo.getBuyerId());
         request.setBizModel(model);
         AlipayTradeCreateResponse response = alipayClient.execute(request);
         if(!response.isSuccess()){
