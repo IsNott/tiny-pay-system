@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @MapperScan(basePackages = {"org.nott.mapper","org.nott.mybatis.mapper"})
 @SpringBootApplication(scanBasePackages = {"org.nott"})
-public class Application {
+public class PayApplication {
     public static void main(String[] args) {
 
-        SpringApplication.run(Application.class,args);
+        SpringApplication.run(PayApplication.class,args);
     }
 }

@@ -79,6 +79,7 @@ public class TransactionService {
         LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<>();
         wrapper.set(PayTransactionInfo::getNotifyTime,new Date());
         wrapper.set(PayTransactionInfo::getOutTransactionNo,outTradeNo);
+        wrapper.set(PayTransactionInfo::getTransactionStatus,StatusEnum.PAY_SUCCESS.getCode());
         wrapper.eq(PayTransactionInfo::getTransactionNo,inTransactionNo);
         wrapper.isNull(PayTransactionInfo::getOutTransactionNo);
         int update = payTransactionInfoMapper.update(wrapper);
@@ -92,14 +93,14 @@ public class TransactionService {
         String payTradeNo = notifyDTO.getOutTradeNo();
         LambdaUpdateWrapper<PayTransactionInfo> wrapper = new LambdaUpdateWrapper<PayTransactionInfo>()
                 .eq(PayTransactionInfo::getTransactionNo,payTradeNo)
-                .eq(PayTransactionInfo::getTransactionStatus,StatusEnum.REFUNDING);
+                .eq(PayTransactionInfo::getTransactionStatus,StatusEnum.REFUNDING.getCode());
         PayTransactionInfo payTransactionInfo = payTransactionInfoMapper.selectOne(wrapper);
         if(payTransactionInfo == null){
             return;
         }
         LambdaQueryWrapper<PayOrderInfo> queryWrapper = new LambdaQueryWrapper<PayOrderInfo>()
                 .eq(PayOrderInfo::getInTransactionNo, payTransactionInfo.getTransactionNo())
-                .eq(PayOrderInfo::getPayStatus,StatusEnum.REFUNDING);
+                .eq(PayOrderInfo::getPayStatus,StatusEnum.REFUNDING.getCode());
         PayOrderInfo payOrderInfo = payOrderInfoMapper.selectOne(queryWrapper);
         if(payOrderInfo == null){
             return;

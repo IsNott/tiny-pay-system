@@ -1,4 +1,4 @@
-package org.nott.common;
+package org.nott.utils;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;

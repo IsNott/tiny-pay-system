@@ -1,4 +1,4 @@
-package org.nott.common;
+package org.nott.utils;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

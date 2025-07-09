@@ -6,7 +6,7 @@ import com.alipay.api.AlipayApiException;
 import com.alipay.api.internal.util.AlipaySignature;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.nott.common.CommonUtils;
+import org.nott.utils.CommonUtils;
 import org.nott.config.AlipayConfig;
 import org.nott.constant.AlipayBusinessConstant;
 import org.nott.exception.PayException;
